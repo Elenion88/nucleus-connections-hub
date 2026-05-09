@@ -1,11 +1,12 @@
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Play, User, Building2, Shield, Eye } from 'lucide-react';
+import { User, Building2, Shield, Eye } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
 export function Layout() {
   const loc = useLocation();
   const navItems = [
-    { to: '/', label: 'Home', match: (p: string) => p === '/' },
+    { to: '/', label: 'Home',  match: (p: string) => p === '/' },
+    { to: '/story', label: 'Story', match: (p: string) => p.startsWith('/story') },
   ];
   const isHome = loc.pathname === '/';
   return (
@@ -37,16 +38,8 @@ export function Layout() {
               );
             })}
           </nav>
-          <div className="ml-auto flex items-center gap-2">
-            {!isHome && (
-              <Link
-                to="/story"
-                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-nucleus-ink text-nucleus-cream hover:opacity-90 transition-opacity"
-              >
-                <Play className="w-3 h-3 fill-current" /> Story
-              </Link>
-            )}
-          </div>
+          <div className="ml-auto" />
+          {/* Story moved into nav · Persona toggle floats top-right */}
         </div>
       </header>
       <main key={loc.pathname} className="flex-1">

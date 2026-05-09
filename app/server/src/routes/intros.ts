@@ -35,5 +35,11 @@ introRoutes.get('/', async (c) => {
 introRoutes.post('/:id/approve', async (c) => {
   const id = c.req.param('id');
   await db.update(schema.introRequest).set({ status: 'introduced' }).where(eq(schema.introRequest.id, id));
-  return c.json({ ok: true });
+  return c.json({ ok: true, status: 'introduced' });
+});
+
+introRoutes.post('/:id/decline', async (c) => {
+  const id = c.req.param('id');
+  await db.update(schema.introRequest).set({ status: 'declined' }).where(eq(schema.introRequest.id, id));
+  return c.json({ ok: true, status: 'declined' });
 });

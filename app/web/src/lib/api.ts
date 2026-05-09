@@ -61,6 +61,8 @@ export const api = {
   createIntro: (talentId: string, startupId: string, message?: string) =>
     http<{ id: string; status: string }>(`/intros`, { method: 'POST', body: JSON.stringify({ talentId, startupId, message }) }),
   intros: () => http<{ id: string; talentId: string; startupId: string; status: string; message?: string; createdAt: number }[]>(`/intros`),
+  approveIntro: (id: string) => http<{ ok: boolean; status: string }>(`/intros/${id}/approve`, { method: 'POST', body: '{}' }),
+  declineIntro: (id: string) => http<{ ok: boolean; status: string }>(`/intros/${id}/decline`, { method: 'POST', body: '{}' }),
   extractTalent: (text: string) => http<{
     name?: string; headline?: string; bio?: string; location?: string; email?: string;
     roleType?: string; sectors: string[]; skills: string[]; functions: string[];
