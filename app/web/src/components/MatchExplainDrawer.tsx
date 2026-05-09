@@ -123,6 +123,45 @@ export function MatchExplainDrawer({ talentId, startupId, open, onOpenChange }: 
                   </div>
                 )}
 
+                {/* HERO 2: the radar — was hidden in a Disclosure, now front and center */}
+                <div className="card p-5 md:p-6">
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-nucleus-subtle mb-3">
+                    <Telescope className="w-3.5 h-3.5" />
+                    <span>Per-dimension breakdown</span>
+                    <span className="ml-auto text-nucleus-subtle font-normal normal-case tracking-normal hidden sm:inline">Skills · Sector · Stage · Mission · Network</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_180px] gap-4 items-center">
+                    <div>
+                      <RadarFit data={radar} size={200} />
+                      <div className="flex items-center justify-center gap-4 mt-2 text-[10px] text-nucleus-subtle">
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className="w-3 h-1.5 bg-nucleus-accent rounded-sm" />
+                          This match
+                        </span>
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className="w-3 border-t border-dashed border-nucleus-accent2" />
+                          Ideal candidate
+                        </span>
+                      </div>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      {radar.map((r) => (
+                        <div key={r.label}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-nucleus-subtle text-xs">{r.label}</span>
+                            <span className="font-semibold tabular-nums">
+                              {r.value}<span className="text-nucleus-subtle font-normal text-[10px]">/100</span>
+                            </span>
+                          </div>
+                          <div className="h-1 bg-nucleus-line rounded overflow-hidden">
+                            <div className="h-full bg-nucleus-accent" style={{ width: `${r.value}%` }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
                 {/* PRIMARY: why bullets */}
                 <Section title="Three more reasons" icon={<Sparkles className="w-3.5 h-3.5" />}>
                   <ul className="space-y-2.5 text-sm">
@@ -170,46 +209,6 @@ export function MatchExplainDrawer({ talentId, startupId, open, onOpenChange }: 
                     </ul>
                   </Section>
                 )}
-
-                {/* COLLAPSIBLE: per-dim breakdown */}
-                <Disclosure
-                  open={showDetails}
-                  onToggle={() => setShowDetails((v) => !v)}
-                  title="Per-dimension breakdown"
-                  icon={<Telescope className="w-3.5 h-3.5" />}
-                  hint="Skills · Sector · Stage · Mission · Network"
-                >
-                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_180px] gap-4 items-center">
-                    <div>
-                      <RadarFit data={radar} size={220} />
-                      <div className="flex items-center justify-center gap-4 mt-2 text-[10px] text-nucleus-subtle">
-                        <span className="inline-flex items-center gap-1.5">
-                          <span className="w-3 h-1.5 bg-nucleus-accent rounded-sm" />
-                          This match
-                        </span>
-                        <span className="inline-flex items-center gap-1.5">
-                          <span className="w-3 border-t border-dashed border-nucleus-accent2" />
-                          Ideal candidate
-                        </span>
-                      </div>
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      {radar.map((r) => (
-                        <div key={r.label}>
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-nucleus-subtle text-xs">{r.label}</span>
-                            <span className="font-semibold tabular-nums">
-                              {r.value}<span className="text-nucleus-subtle font-normal text-[10px]">/100</span>
-                            </span>
-                          </div>
-                          <div className="h-1 bg-nucleus-line rounded overflow-hidden">
-                            <div className="h-full bg-nucleus-accent" style={{ width: `${r.value}%` }} />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </Disclosure>
 
                 {/* COLLAPSIBLE: profile facts */}
                 <Disclosure

@@ -54,6 +54,10 @@ else
   echo "==> database already seeded, skipping (delete app/server/nucleus.db to reseed)"
 fi
 
+# 5. Warm the explanation cache for demo personas (idempotent — skips already-cached pairs)
+echo "==> warming explanation cache for demo personas"
+( cd app/server && npm run seed:warm ) || echo "==> (warm step had failures — service still works, first click will compute)"
+
 # 5. Make sure PORT is set in .env (default to 4012)
 if ! grep -q "^PORT=" app/server/.env; then
   echo "PORT=$PORT" >> app/server/.env

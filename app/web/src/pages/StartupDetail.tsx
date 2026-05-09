@@ -4,7 +4,8 @@ import { api, pipe, pretty, type Talent, type Startup, type MatchDimensions } fr
 import { Avatar, StartupLogo } from '@/components/Avatar.tsx';
 import { ScoreDonut } from '@/components/ScoreDonut.tsx';
 import { MatchExplainDrawer } from '@/components/MatchExplainDrawer.tsx';
-import { LandscapeMap } from '@/components/LandscapeMap.tsx';
+import { MiniRadar } from '@/components/MiniRadar.tsx';
+import { FitMap } from '@/components/FitMap.tsx';
 import { toast } from '@/components/Toast.tsx';
 
 interface ScoredTalent { talent: Talent; score: number; dimensions: MatchDimensions; rank: number; total: number }
@@ -18,7 +19,7 @@ export function StartupDetail() {
   useEffect(() => {
     if (!id) return;
     api.startup(id).then(setStartup).catch((e) => toast(`Couldn't load startup: ${(e as Error).message}`, 'error'));
-    api.matchesForStartup(id, 6).then((r) => setMatches(r.matches)).catch((e) => toast(`Couldn't load matches: ${(e as Error).message}`, 'error'));
+    api.matchesForStartup(id, 50).then((r) => setMatches(r.matches)).catch((e) => toast(`Couldn't load matches: ${(e as Error).message}`, 'error'));
   }, [id]);
 
   if (!startup) return <div className="max-w-6xl mx-auto px-6 py-10 text-nucleus-subtle">Loading…</div>;
@@ -55,14 +56,22 @@ export function StartupDetail() {
         <section className="md:col-span-2">
           <div className="mb-6">
             <div className="flex items-baseline justify-between mb-3">
-              <h2 className="display text-xl font-semibold">Match landscape</h2>
-              <span className="text-xs text-nucleus-subtle hidden md:inline">2D PCA of all 53 profiles · top matches pulse copper</span>
+              <h2 className="display text-xl font-semibold">Fit map</h2>
+              <span className="text-xs text-nucleus-subtle hidden md:inline">Skills fit (X) · Sector fit (Y) — top-right is the bullseye</span>
             </div>
             {startup && matches.length > 0 && (
-              <LandscapeMap
-                focalId={startup.id}
-                highlightedIds={matches.map((m) => m.talent.id)}
-                height={300}
+              <FitMap
+                focalLabel={startup.name}
+                focalKind="startup"
+                candidates={matches.slice(0, 30).map((m, i) => ({
+                  id: m.talent.id,
+                  label: m.talent.name,
+                  skills: m.dimensions.skills,
+                  sector: m.dimensions.sector,
+                  score: m.score,
+                  rank: m.rank,
+                  highlight: i < 6,
+                }))}
               />
             )}
           </div>
@@ -79,7 +88,7 @@ export function StartupDetail() {
                 <div className="text-nucleus-subtle mt-1">Top score is {matches[0].score}, below our 65 threshold for "high-confidence." Consider broadening immediate needs, or wait — we'll notify you as new operators sign up.</div>
               </div>
             )}
-            {matches.map((m) => (
+            {matches.slice(0, 6).map((m) => (
               <button
                 key={m.talent.id}
                 onClick={() => setActiveTalent(m.talent.id)}
@@ -97,7 +106,9 @@ export function StartupDetail() {
                     <span className="pill-soft hidden sm:inline-flex">{pretty(m.talent.availability)}</span>
                   </div>
                   <p className="text-sm text-nucleus-subtle mt-1 line-clamp-2">{m.talent.headline}</p>
-                  <DimensionBars dim={m.dimensions} />
+                </div>
+                <div className="hidden md:flex items-center shrink-0" title="Skills · Sector · Stage · Mission · Network">
+                  <MiniRadar data={radarFromDim(m.dimensions)} size={64} />
                 </div>
                 <div className="text-nucleus-accent text-sm font-medium shrink-0 hidden sm:block">Why? →</div>
               </button>
@@ -146,25 +157,12 @@ function FactGroup({ label, pills, variant = 'soft' }: { label: string; pills: s
   );
 }
 
-function DimensionBars({ dim }: { dim: MatchDimensions }) {
-  const items = [
-    { l: 'Skills', v: dim.skills },
-    { l: 'Sector', v: dim.sector },
-    { l: 'Stage', v: dim.stage },
-    { l: 'Mission', v: dim.mission },
-    { l: 'Network', v: dim.network },
+function radarFromDim(dim: MatchDimensions) {
+  return [
+    { label: 'Skills', value: dim.skills },
+    { label: 'Sector', value: dim.sector },
+    { label: 'Stage', value: dim.stage },
+    { label: 'Mission', value: dim.mission },
+    { label: 'Network', value: dim.network },
   ];
-  return (
-    <div className="mt-3 grid grid-cols-5 gap-2">
-      {items.map((i) => (
-        <div key={i.l} className="text-[10px]">
-          <div className="text-nucleus-subtle uppercase tracking-widest">{i.l}</div>
-          <div className="h-1.5 bg-nucleus-line rounded mt-1 overflow-hidden">
-            <div className="h-full bg-nucleus-accent" style={{ width: `${i.v}%` }} />
-          </div>
-          <div className="text-right tabular-nums text-nucleus-subtle mt-0.5">{i.v}</div>
-        </div>
-      ))}
-    </div>
-  );
 }
