@@ -5,7 +5,8 @@ import { Avatar, StartupLogo } from '@/components/Avatar.tsx';
 import { ScoreDonut } from '@/components/ScoreDonut.tsx';
 import { MatchExplainDrawer } from '@/components/MatchExplainDrawer.tsx';
 import { MiniRadar } from '@/components/MiniRadar.tsx';
-import { FitMap } from '@/components/FitMap.tsx';
+import { BridgeView, type BridgeEdge } from '@/components/BridgeView.tsx';
+import { MultiRadar } from '@/components/MultiRadar.tsx';
 import { toast } from '@/components/Toast.tsx';
 
 interface ScoredTalent { talent: Talent; score: number; dimensions: MatchDimensions; rank: number; total: number }
@@ -15,11 +16,13 @@ export function StartupDetail() {
   const [startup, setStartup] = useState<Startup | null>(null);
   const [matches, setMatches] = useState<ScoredTalent[]>([]);
   const [activeTalent, setActiveTalent] = useState<string | null>(null);
+  const [edges, setEdges] = useState<BridgeEdge[]>([]);
 
   useEffect(() => {
     if (!id) return;
     api.startup(id).then(setStartup).catch((e) => toast(`Couldn't load startup: ${(e as Error).message}`, 'error'));
     api.matchesForStartup(id, 50).then((r) => setMatches(r.matches)).catch((e) => toast(`Couldn't load matches: ${(e as Error).message}`, 'error'));
+    api.graph().then((g) => setEdges(g.edges)).catch(() => {});
   }, [id]);
 
   if (!startup) return <div className="max-w-6xl mx-auto px-6 py-10 text-nucleus-subtle">Loading…</div>;
@@ -56,23 +59,51 @@ export function StartupDetail() {
         <section className="md:col-span-2">
           <div className="mb-6">
             <div className="flex items-baseline justify-between mb-3">
-              <h2 className="display text-xl font-semibold">Fit map</h2>
-              <span className="text-xs text-nucleus-subtle hidden md:inline">Skills fit (X) · Sector fit (Y) — top-right is the bullseye</span>
+              <h2 className="display text-xl font-semibold">Network bridge</h2>
+              <span className="text-xs text-nucleus-subtle hidden md:inline">Why each top operator connects — institutions · sectors · missions · direct edges</span>
             </div>
             {startup && matches.length > 0 && (
-              <FitMap
-                focalLabel={startup.name}
-                focalKind="startup"
-                candidates={matches.slice(0, 30).map((m, i) => ({
+              <BridgeView
+                focal={{
+                  id: startup.id,
+                  name: startup.name,
+                  kind: 'startup',
+                  affiliations: pipe(startup.utahRoots),
+                  sectors: [startup.sector],
+                  mission: pipe(startup.missionTags),
+                }}
+                matches={matches.slice(0, 5).map((m) => ({
                   id: m.talent.id,
-                  label: m.talent.name,
-                  skills: m.dimensions.skills,
-                  sector: m.dimensions.sector,
-                  score: m.score,
+                  name: m.talent.name,
+                  kind: 'talent',
                   rank: m.rank,
-                  highlight: i < 6,
+                  score: m.score,
+                  affiliations: pipe(m.talent.affiliations),
+                  sectors: pipe(m.talent.sectors),
+                  mission: pipe(m.talent.missionTags),
                 }))}
+                edges={edges.filter((e) => e.from === startup.id || e.to === startup.id)}
               />
+            )}
+          </div>
+
+          <div className="mb-6">
+            <div className="flex items-baseline justify-between mb-3">
+              <h2 className="display text-xl font-semibold">Compare top 5 at a glance</h2>
+              <span className="text-xs text-nucleus-subtle hidden md:inline">Each candidate as a translucent radar · where do they agree, where differ</span>
+            </div>
+            {matches.length > 0 && (
+              <div className="card p-5 md:p-6">
+                <MultiRadar
+                  axes={['Skills', 'Sector', 'Stage', 'Mission', 'Network']}
+                  series={matches.slice(0, 5).map((m) => ({
+                    id: m.talent.id,
+                    label: m.talent.name,
+                    rank: m.rank,
+                    values: [m.dimensions.skills, m.dimensions.sector, m.dimensions.stage, m.dimensions.mission, m.dimensions.network],
+                  }))}
+                />
+              </div>
             )}
           </div>
 

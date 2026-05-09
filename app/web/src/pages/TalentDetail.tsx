@@ -5,7 +5,8 @@ import { Avatar, StartupLogo } from '@/components/Avatar.tsx';
 import { ScoreDonut } from '@/components/ScoreDonut.tsx';
 import { MatchExplainDrawer } from '@/components/MatchExplainDrawer.tsx';
 import { MiniRadar } from '@/components/MiniRadar.tsx';
-import { FitMap } from '@/components/FitMap.tsx';
+import { BridgeView, type BridgeEdge } from '@/components/BridgeView.tsx';
+import { MultiRadar } from '@/components/MultiRadar.tsx';
 import { toast } from '@/components/Toast.tsx';
 
 interface ScoredStartup { startup: Startup; score: number; dimensions: MatchDimensions; rank: number; total: number }
@@ -15,11 +16,13 @@ export function TalentDetail() {
   const [talent, setTalent] = useState<Talent | null>(null);
   const [matches, setMatches] = useState<ScoredStartup[]>([]);
   const [activeStartup, setActiveStartup] = useState<string | null>(null);
+  const [edges, setEdges] = useState<BridgeEdge[]>([]);
 
   useEffect(() => {
     if (!id) return;
     api.talent(id).then(setTalent).catch((e) => toast(`Couldn't load profile: ${(e as Error).message}`, 'error'));
     api.matchesForTalent(id, 25).then((r) => setMatches(r.matches)).catch((e) => toast(`Couldn't load matches: ${(e as Error).message}`, 'error'));
+    api.graph().then((g) => setEdges(g.edges)).catch(() => {});
   }, [id]);
 
   if (!talent) return <div className="max-w-6xl mx-auto px-6 py-10 text-nucleus-subtle">Loading…</div>;
@@ -57,23 +60,51 @@ export function TalentDetail() {
         <section className="md:col-span-2">
           <div className="mb-6">
             <div className="flex items-baseline justify-between mb-3">
-              <h2 className="display text-xl font-semibold">Fit map</h2>
-              <span className="text-xs text-nucleus-subtle hidden md:inline">Skills fit (X) · Sector fit (Y) — top-right is the bullseye</span>
+              <h2 className="display text-xl font-semibold">Network bridge</h2>
+              <span className="text-xs text-nucleus-subtle hidden md:inline">Why each top match connects — institutions · sectors · missions · direct edges</span>
             </div>
             {talent && matches.length > 0 && (
-              <FitMap
-                focalLabel={talent.name}
-                focalKind="talent"
-                candidates={matches.slice(0, 18).map((m, i) => ({
+              <BridgeView
+                focal={{
+                  id: talent.id,
+                  name: talent.name,
+                  kind: 'talent',
+                  affiliations: pipe(talent.affiliations),
+                  sectors: pipe(talent.sectors),
+                  mission: pipe(talent.missionTags),
+                }}
+                matches={matches.slice(0, 5).map((m) => ({
                   id: m.startup.id,
-                  label: m.startup.name,
-                  skills: m.dimensions.skills,
-                  sector: m.dimensions.sector,
-                  score: m.score,
+                  name: m.startup.name,
+                  kind: 'startup',
                   rank: m.rank,
-                  highlight: i < 5,
+                  score: m.score,
+                  affiliations: pipe(m.startup.utahRoots),
+                  sectors: [m.startup.sector],
+                  mission: pipe(m.startup.missionTags),
                 }))}
+                edges={edges.filter((e) => e.from === talent.id || e.to === talent.id)}
               />
+            )}
+          </div>
+
+          <div className="mb-6">
+            <div className="flex items-baseline justify-between mb-3">
+              <h2 className="display text-xl font-semibold">Compare top 5 at a glance</h2>
+              <span className="text-xs text-nucleus-subtle hidden md:inline">Each candidate as a translucent radar · where do they agree, where differ</span>
+            </div>
+            {matches.length > 0 && (
+              <div className="card p-5 md:p-6">
+                <MultiRadar
+                  axes={['Skills', 'Sector', 'Stage', 'Mission', 'Network']}
+                  series={matches.slice(0, 5).map((m) => ({
+                    id: m.startup.id,
+                    label: m.startup.name,
+                    rank: m.rank,
+                    values: [m.dimensions.skills, m.dimensions.sector, m.dimensions.stage, m.dimensions.mission, m.dimensions.network],
+                  }))}
+                />
+              </div>
             )}
           </div>
 
