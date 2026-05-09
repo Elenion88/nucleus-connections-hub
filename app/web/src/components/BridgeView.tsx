@@ -80,12 +80,12 @@ const MISSION_LABELS: Record<string, string> = {
   community: 'Community',
 };
 
-const W = 880;
+const W = 960;
 const H = 480;
 const PAD_T = 40;
 const PAD_B = 30;
 const FOCAL_X = 80;
-const BRIDGE_X = 380;
+const BRIDGE_X = 400;
 const MATCH_X = 720;
 
 export function BridgeView({
@@ -98,11 +98,13 @@ export function BridgeView({
 }) {
 
   const bridges = useMemo(() => buildBridges(focal, matches, edges), [focal, matches, edges]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedBridgeId, setSelectedBridgeId] = useState<string | null>(null);
+  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
 
   function selectBridge(id: string | null) {
-    const next = id === selectedId ? null : id;
-    setSelectedId(next);
+    const next = id === selectedBridgeId ? null : id;
+    setSelectedBridgeId(next);
+    setSelectedMatchId(null);
     if (!onSelectBridge) return;
     if (next === null) {
       onSelectBridge(null);
@@ -111,10 +113,37 @@ export function BridgeView({
       if (b) onSelectBridge({ id: b.id, label: b.label, matchIds: b.matches });
     }
   }
+  function selectMatch(id: string | null) {
+    const next = id === selectedMatchId ? null : id;
+    setSelectedMatchId(next);
+    setSelectedBridgeId(null);
+    if (!onSelectBridge) return;
+    if (next === null) {
+      onSelectBridge(null);
+    } else {
+      const m = matches.find((x) => x.id === next);
+      if (m) onSelectBridge({ id: `match:${m.id}`, label: m.name, matchIds: [m.id] });
+    }
+  }
+  function clearAll() {
+    setSelectedBridgeId(null);
+    setSelectedMatchId(null);
+    onSelectBridge?.(null);
+  }
 
-  const selectedBridge = bridges.find((b) => b.id === selectedId);
-  const dimMode = selectedBridge != null;
-  const matchIsActive = (mid: string) => !dimMode || (selectedBridge?.matches.includes(mid) ?? false);
+  const selectedBridge = bridges.find((b) => b.id === selectedBridgeId);
+  const dimMode = selectedBridge != null || selectedMatchId != null;
+  const matchIsActive = (mid: string) => {
+    if (!dimMode) return true;
+    if (selectedBridge) return selectedBridge.matches.includes(mid);
+    return mid === selectedMatchId;
+  };
+  const bridgeIsActive = (b: Bridge) => {
+    if (!dimMode) return true;
+    if (selectedBridgeId) return b.id === selectedBridgeId;
+    if (selectedMatchId) return b.matches.includes(selectedMatchId);
+    return true;
+  };
 
   // Layout: vertically distribute bridges and matches
   const bridgeYs = layoutColumn(bridges.length, PAD_T, H - PAD_B);
@@ -141,7 +170,7 @@ export function BridgeView({
 
         {/* Curves: focal → bridge (one per bridge) */}
         {focalToBridge.map(({ b, y }, i) => {
-          const active = !dimMode || b.id === selectedId;
+          const active = bridgeIsActive(b);
           return (
             <BridgeCurve
               key={`fb-${b.id}`}
@@ -160,7 +189,8 @@ export function BridgeView({
           const matchInfo = matchById.get(mid);
           const bridgeInfo = bridgeById.get(b.id);
           if (!matchInfo || !bridgeInfo) return null;
-          const active = !dimMode || b.id === selectedId;
+          // Curve is active iff its bridge AND its match are both active.
+          const active = bridgeIsActive(b) && matchIsActive(mid);
           return (
             <BridgeCurve
               key={`bm-${b.id}-${mid}`}
@@ -174,8 +204,8 @@ export function BridgeView({
           );
         }))}
 
-        {/* Focal node */}
-        <FocalNode x={FOCAL_X} y={focalY} label={focal.name} kind={focal.kind} />
+        {/* Focal node — clicking clears any active selection */}
+        <FocalNode x={FOCAL_X} y={focalY} label={focal.name} kind={focal.kind} onClick={clearAll} />
 
         {/* Bridge nodes */}
         {bridges.map((b, i) => (
@@ -185,8 +215,8 @@ export function BridgeView({
             label={b.label}
             kind={b.kind}
             count={b.matches.length}
-            selected={b.id === selectedId}
-            dimmed={dimMode && b.id !== selectedId}
+            selected={b.id === selectedBridgeId}
+            dimmed={!bridgeIsActive(b)}
             onClick={() => selectBridge(b.id)}
             delay={i * 0.05}
           />
@@ -203,6 +233,8 @@ export function BridgeView({
             kind={m.kind}
             connected={isConnected(m.id, bridges)}
             active={matchIsActive(m.id)}
+            selected={m.id === selectedMatchId}
+            onClick={() => selectMatch(m.id)}
             delay={0.15 + i * 0.05}
           />
         ))}
@@ -217,11 +249,24 @@ export function BridgeView({
                 Filtering by {selectedBridge.label}
               </span>
               <span className="text-nucleus-subtle">{selectedBridge.matches.length} of {matches.length} matches share this bridge.</span>
-              <button onClick={() => selectBridge(null)} className="ml-1 px-2 py-0.5 text-[11px] rounded-full bg-nucleus-cream hover:bg-nucleus-line transition-colors">Clear</button>
+              <button onClick={clearAll} className="ml-1 px-2 py-0.5 text-[11px] rounded-full bg-nucleus-cream hover:bg-nucleus-line transition-colors">Clear</button>
             </>
-          ) : (
+          ) : selectedMatchId ? (() => {
+            const m = matches.find((x) => x.id === selectedMatchId);
+            const matchedBridges = bridges.filter((b) => b.matches.includes(selectedMatchId)).map((b) => b.label);
+            return (
+              <>
+                <span className="inline-flex items-center gap-1.5 text-nucleus-ink font-semibold">
+                  <span className="w-2 h-2 rounded-full bg-nucleus-accent" />
+                  Showing bridges to {m?.name ?? 'selected match'}
+                </span>
+                <span className="text-nucleus-subtle">{matchedBridges.length} of {bridges.length} bridges connect.</span>
+                <button onClick={clearAll} className="ml-1 px-2 py-0.5 text-[11px] rounded-full bg-nucleus-cream hover:bg-nucleus-line transition-colors">Clear</button>
+              </>
+            );
+          })() : (
             <>
-              <span className="font-semibold text-nucleus-ink">Tap a bridge to filter:</span>
+              <span className="font-semibold text-nucleus-ink">Tap a bridge or match to filter:</span>
               <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: bridgeColor('institution') }} /> Institution</span>
               <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: bridgeColor('sector') }} /> Sector</span>
               <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: bridgeColor('mission') }} /> Mission</span>
@@ -265,9 +310,9 @@ function BridgeCurve({ x1, y1, x2, y2, color, weight, opacity = 0.85, delay = 0 
   );
 }
 
-function FocalNode({ x, y, label, kind }: { x: number; y: number; label: string; kind: 'talent' | 'startup' }) {
+function FocalNode({ x, y, label, kind, onClick }: { x: number; y: number; label: string; kind: 'talent' | 'startup'; onClick?: () => void }) {
   return (
-    <g>
+    <g onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
       <motion.circle
         cx={x} cy={y} r={32}
         initial={{ scale: 0, opacity: 0 }}
@@ -280,7 +325,7 @@ function FocalNode({ x, y, label, kind }: { x: number; y: number; label: string;
         {initials(label)}
       </text>
       <text x={x} y={y + 56} textAnchor="middle" fontSize={13} fontWeight={700} fill="#0c1525">{label}</text>
-      <text x={x} y={y + 72} textAnchor="middle" fontSize={10} fontWeight={600} fill="#9aa0ad" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>You</text>
+      <text x={x} y={y + 72} textAnchor="middle" fontSize={10} fontWeight={600} fill="#9aa0ad" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>You · click to clear</text>
     </g>
   );
 }
@@ -321,31 +366,39 @@ function BridgeNode({ x, y, label, kind, count, selected, dimmed, onClick, delay
   );
 }
 
-function MatchNode({ x, y, label, score, rank, kind, connected, active, delay }: {
+function MatchNode({ x, y, label, score, rank, kind, connected, active, selected, onClick, delay }: {
   x: number; y: number; label: string; score: number; rank: number;
-  kind: 'talent' | 'startup'; connected: boolean; active: boolean; delay: number;
+  kind: 'talent' | 'startup'; connected: boolean; active: boolean; selected: boolean;
+  onClick: () => void; delay: number;
 }) {
   const baseOp = connected ? 1 : 0.5;
   const opacity = active ? baseOp : 0.18;
+  const chipFill = selected ? '#c4794a' : (connected ? '#0c1525' : '#9aa0ad');
   return (
     <motion.g
+      onClick={onClick}
       initial={{ opacity: 0, x: 16 }}
       animate={{ opacity, x: 0 }}
       transition={{ duration: 0.4, delay }}
+      style={{ cursor: 'pointer' }}
     >
+      {/* selected ring */}
+      {selected && (
+        <circle cx={x} cy={y} r={28} fill="none" stroke="#c4794a" strokeWidth={1.5} strokeDasharray="3 3" />
+      )}
       {/* Score chip */}
       <circle cx={x} cy={y} r={22}
-              fill={connected ? '#0c1525' : '#9aa0ad'}
+              fill={chipFill}
               stroke="white" strokeWidth={2.5} />
-      <text x={x} y={y + 4} textAnchor="middle" fontSize={13} fontWeight={700} fill="white">{score}</text>
+      <text x={x} y={y + 4} textAnchor="middle" fontSize={13} fontWeight={700} fill="white" pointerEvents="none">{score}</text>
 
-      {/* Label to right */}
-      <text x={x + 34} y={y - 2} fontSize={13} fontWeight={700} fill="#0c1525">
-        #{rank} {truncate(label, 22)}
+      {/* Label to right (clickable) */}
+      <text x={x + 34} y={y - 2} fontSize={13} fontWeight={selected ? 800 : 700} fill={selected ? '#c4794a' : '#0c1525'}>
+        #{rank} {truncate(label, 24)}
       </text>
       <text x={x + 34} y={y + 14} fontSize={10} fontWeight={600} fill="#9aa0ad"
             style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-        {kind === 'startup' ? 'Startup' : 'Operator'}{connected ? '' : ' · skills only'}
+        {kind === 'startup' ? 'Startup' : 'Operator'}{connected ? '' : ' · skills only'}{selected ? ' · selected' : ''}
       </text>
     </motion.g>
   );
