@@ -200,13 +200,6 @@ export function NucleusAdmin() {
             </div>
           </div>
 
-          <div className="card p-6">
-            <h3 className="display text-lg font-semibold">Squarespace embed</h3>
-            <p className="text-xs text-nucleus-subtle mt-1">
-              Drop-in replacement for the Typeform on nucleusutah.org/contact.
-            </p>
-            <a href="/embed-preview" className="btn-outline mt-3 text-sm w-full justify-center">Preview embed →</a>
-          </div>
         </aside>
       </div>
 

@@ -379,14 +379,18 @@ function WhyScene({ progress }: { progress: number }) {
       <div className="mt-6 space-y-3">
         {REASONS.map((r, i) => {
           const showAt = reasonsStartT + i * 0.13;
-          const visible = progress > showAt;
+          if (progress < showAt) return null;
+          // Conditional render so the card mounts at the threshold, framer
+          // runs initial→animate exactly once, and there's no animate-prop
+          // churn from re-renders while progress ticks.
           return (
             <motion.div
               key={i}
               initial={{ opacity: 0, x: -12 }}
-              animate={{ opacity: visible ? 1 : 0, x: visible ? 0 : -12 }}
-              transition={{ duration: 0.4 }}
-              className="bg-white text-nucleus-ink rounded-lg p-4 shadow-lg flex gap-3 text-sm md:text-base"
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.35 }}
+              style={{ backgroundColor: '#ffffff', color: '#0c1525' }}
+              className="rounded-lg p-4 shadow-lg flex gap-3 text-sm md:text-base"
             >
               <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-nucleus-accent shrink-0" />
               <span>{r}</span>
