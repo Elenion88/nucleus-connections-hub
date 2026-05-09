@@ -46,10 +46,10 @@ if [ ! -f app/server/.env ]; then
   exit 1
 fi
 
-# 4. Seed + embed if database is empty
+# 4. Migrate + seed + embed if database is empty
 if [ ! -s app/server/nucleus.db ]; then
-  echo "==> seeding database"
-  ( cd app/server && PORT=$PORT npm run seed:load && npm run seed:embed )
+  echo "==> migrating + seeding database"
+  ( cd app/server && npm run migrate && npm run seed:load && npm run seed:embed )
 else
   echo "==> database already seeded, skipping (delete app/server/nucleus.db to reseed)"
 fi
