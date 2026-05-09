@@ -8,7 +8,7 @@
 // Anything below #4 is supporting; the bullets are the product.
 
 import * as Dialog from '@radix-ui/react-dialog';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, pipe, pretty, type MatchExplain, type MatchSuggestion } from '@/lib/api';
 import { Avatar, StartupLogo } from './Avatar.tsx';
 import { ScoreDonut } from './ScoreDonut.tsx';
@@ -31,8 +31,18 @@ export function MatchExplainDrawer({ talentId, startupId, open, onOpenChange }: 
   const [path, setPath] = useState<{ node: string; kind?: string; evidence?: string }[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [existingIntro, setExistingIntro] = useState<ExistingIntro | null>(null);
+  const [draftPanelOpen, setDraftPanelOpen] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [showFacts, setShowFacts] = useState(false);
+  const draftSectionRef = useRef<HTMLDivElement | null>(null);
+
+  // Footer button → expand the inline draft panel + scroll to it.
+  function openDraftPanel() {
+    setDraftPanelOpen(true);
+    requestAnimationFrame(() => {
+      draftSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -249,31 +259,46 @@ export function MatchExplainDrawer({ talentId, startupId, open, onOpenChange }: 
                   <CloseTheGap talentId={talentId} startupId={startupId} suggestions={data.suggestions} score={data.score} />
                 )}
                 {data.outreachDraft && (
-                  <DraftIntro
-                    talentId={talentId}
-                    startupId={startupId}
-                    talent={data.talent?.name ?? 'you'}
-                    startup={data.startup?.name ?? 'them'}
-                    draft={data.outreachDraft}
-                    existing={existingIntro}
-                    onSubmitted={(intro) => setExistingIntro(intro)}
-                  />
+                  <div ref={draftSectionRef}>
+                    <DraftIntro
+                      talentId={talentId}
+                      startupId={startupId}
+                      talent={data.talent?.name ?? 'you'}
+                      startup={data.startup?.name ?? 'them'}
+                      draft={data.outreachDraft}
+                      existing={existingIntro}
+                      open={draftPanelOpen}
+                      onOpenChange={setDraftPanelOpen}
+                      onSubmitted={(intro) => setExistingIntro(intro)}
+                    />
+                  </div>
                 )}
               </>
             )}
           </div>
 
-          <div className="border-t hairline px-5 md:px-6 py-4 bg-nucleus-paper flex items-center justify-between gap-3">
-            <div className="text-xs text-nucleus-subtle">
-              {existingIntro ? (
-                <span className="inline-flex items-center gap-1.5 text-nucleus-accent2 font-medium">
-                  <Check className="w-3.5 h-3.5" />
-                  Intro {existingIntro.status === 'introduced' ? 'introduced' : existingIntro.status === 'declined' ? 'declined' : 'submitted to Nucleus'}
-                </span>
-              ) : (
-                <span>Submit your draft below — Nucleus reviews and forwards.</span>
-              )}
-            </div>
+          <div className="border-t hairline px-5 md:px-6 py-4 bg-nucleus-paper flex items-center gap-3">
+            {existingIntro ? (
+              <button
+                onClick={openDraftPanel}
+                className={`btn flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all ${
+                  existingIntro.status === 'introduced' ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' :
+                  existingIntro.status === 'declined'   ? 'bg-red-100 text-red-700 hover:bg-red-200' :
+                                                          'bg-nucleus-accent2/15 text-nucleus-accent2 hover:bg-nucleus-accent2/25'
+                }`}
+              >
+                <Check className="w-4 h-4" />
+                Intro {existingIntro.status === 'introduced' ? 'introduced' : existingIntro.status === 'declined' ? 'declined' : 'submitted to Nucleus'} · view
+              </button>
+            ) : (
+              <button
+                onClick={openDraftPanel}
+                disabled={!data}
+                className="btn-accent flex-1 disabled:opacity-50"
+              >
+                <Send className="w-4 h-4" /> Request intro via Nucleus
+              </button>
+            )}
             <Dialog.Close className="btn-outline">Close</Dialog.Close>
           </div>
         </Dialog.Content>
@@ -489,19 +514,20 @@ function CloseTheGap({ talentId, startupId, suggestions, score }: {
 // body — when an admin approves, this is what gets forwarded. "Copy" remains
 // as a secondary option for users who'd rather reach out directly without
 // Nucleus facilitating.
-function DraftIntro({ talentId, startupId, talent, startup, draft, existing, onSubmitted }: {
+function DraftIntro({ talentId, startupId, talent, startup, draft, existing, open, onOpenChange, onSubmitted }: {
   talentId: string; startupId: string;
   talent: string; startup: string; draft: string;
   existing: { id: string; status: string; message?: string } | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onSubmitted: (intro: { id: string; status: string; message?: string }) => void;
 }) {
-  const [open, setOpen] = useState(!!existing);
   const [body, setBody] = useState(existing?.message ?? draft);
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => { setBody(existing?.message ?? draft); }, [draft, existing?.message]);
-  useEffect(() => { if (existing) setOpen(true); }, [existing?.id]);
+  useEffect(() => { if (existing) onOpenChange(true); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [existing?.id]);
 
   const submitted = !!existing;
   const statusLabel = !submitted ? '' :
@@ -537,7 +563,7 @@ function DraftIntro({ talentId, startupId, talent, startup, draft, existing, onS
     <Section title={submitted ? 'Your intro' : 'Send an intro'} icon={<Mail className="w-3.5 h-3.5" />}>
       {!open ? (
         <button
-          onClick={() => setOpen(true)}
+          onClick={() => onOpenChange(true)}
           className="w-full text-left rounded-lg border-2 border-dashed border-nucleus-accent2/40 bg-nucleus-cream/40 hover:bg-nucleus-cream hover:border-nucleus-accent2 transition-all p-4 group"
         >
           <div className="flex items-center justify-between gap-3">
@@ -603,7 +629,7 @@ function DraftIntro({ talentId, startupId, talent, startup, draft, existing, onS
                     {copied ? 'Copied' : 'Or copy & send directly'}
                   </button>
                 </div>
-                <button onClick={() => setOpen(false)} className="text-xs text-nucleus-subtle hover:text-nucleus-ink">
+                <button onClick={() => onOpenChange(false)} className="text-xs text-nucleus-subtle hover:text-nucleus-ink">
                   Collapse
                 </button>
               </>
