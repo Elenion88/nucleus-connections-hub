@@ -24,11 +24,13 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
+interface ExistingIntro { id: string; status: string; message?: string }
+
 export function MatchExplainDrawer({ talentId, startupId, open, onOpenChange }: Props) {
   const [data, setData] = useState<MatchExplain | null>(null);
   const [path, setPath] = useState<{ node: string; kind?: string; evidence?: string }[] | null>(null);
   const [loading, setLoading] = useState(false);
-  const [introSent, setIntroSent] = useState(false);
+  const [existingIntro, setExistingIntro] = useState<ExistingIntro | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [showFacts, setShowFacts] = useState(false);
 
@@ -36,7 +38,7 @@ export function MatchExplainDrawer({ talentId, startupId, open, onOpenChange }: 
     if (!open) return;
     setData(null);
     setPath(null);
-    setIntroSent(false);
+    setExistingIntro(null);
     setShowDetails(false);
     setShowFacts(false);
     setLoading(true);
@@ -48,8 +50,9 @@ export function MatchExplainDrawer({ talentId, startupId, open, onOpenChange }: 
       .then(([explain, p, intros]) => {
         setData(explain);
         setPath(p.path ?? null);
-        if (Array.isArray(intros) && intros.some((i) => i.talentId === talentId && i.startupId === startupId)) {
-          setIntroSent(true);
+        if (Array.isArray(intros)) {
+          const found = intros.find((i) => i.talentId === talentId && i.startupId === startupId);
+          if (found) setExistingIntro({ id: found.id, status: found.status, message: found.message });
         }
       })
       .catch((e) => toast(`Couldn't load match: ${(e as Error).message}`, 'error'))
@@ -246,35 +249,31 @@ export function MatchExplainDrawer({ talentId, startupId, open, onOpenChange }: 
                   <CloseTheGap talentId={talentId} startupId={startupId} suggestions={data.suggestions} score={data.score} />
                 )}
                 {data.outreachDraft && (
-                  <DraftIntro talent={data.talent?.name ?? 'you'} startup={data.startup?.name ?? 'them'} draft={data.outreachDraft} />
+                  <DraftIntro
+                    talentId={talentId}
+                    startupId={startupId}
+                    talent={data.talent?.name ?? 'you'}
+                    startup={data.startup?.name ?? 'them'}
+                    draft={data.outreachDraft}
+                    existing={existingIntro}
+                    onSubmitted={(intro) => setExistingIntro(intro)}
+                  />
                 )}
               </>
             )}
           </div>
 
-          <div className="border-t hairline px-5 md:px-6 py-4 bg-nucleus-paper flex items-center gap-3">
-            {!introSent ? (
-              <button
-                className="btn-accent flex-1 disabled:opacity-50"
-                disabled={!data}
-                onClick={async () => {
-                  if (!data) return;
-                  try {
-                    await api.createIntro(talentId, startupId, 'Requested via Nucleus match drawer');
-                    setIntroSent(true);
-                    toast('Intro requested. Nucleus will be in touch.', 'success');
-                  } catch (e) {
-                    toast(`Couldn't request intro: ${(e as Error).message}`, 'error');
-                  }
-                }}
-              >
-                <Send className="w-4 h-4" /> Request intro via Nucleus
-              </button>
-            ) : (
-              <div className="flex-1 text-sm text-nucleus-accent2 font-medium text-center py-2">
-                ✓ Intro request sent. Nucleus staff will be in touch.
-              </div>
-            )}
+          <div className="border-t hairline px-5 md:px-6 py-4 bg-nucleus-paper flex items-center justify-between gap-3">
+            <div className="text-xs text-nucleus-subtle">
+              {existingIntro ? (
+                <span className="inline-flex items-center gap-1.5 text-nucleus-accent2 font-medium">
+                  <Check className="w-3.5 h-3.5" />
+                  Intro {existingIntro.status === 'introduced' ? 'introduced' : existingIntro.status === 'declined' ? 'declined' : 'submitted to Nucleus'}
+                </span>
+              ) : (
+                <span>Submit your draft below — Nucleus reviews and forwards.</span>
+              )}
+            </div>
             <Dialog.Close className="btn-outline">Close</Dialog.Close>
           </div>
         </Dialog.Content>
@@ -485,14 +484,43 @@ function CloseTheGap({ talentId, startupId, suggestions, score }: {
   );
 }
 
-// ----- Draft my own intro: AI-generated first email, editable, copyable -----
-function DraftIntro({ talent, startup, draft }: { talent: string; startup: string; draft: string }) {
-  const [open, setOpen] = useState(false);
-  const [body, setBody] = useState(draft);
+// ----- Draft my own intro -----
+// The single submit-to-Nucleus point. The drafted email IS the intro request
+// body — when an admin approves, this is what gets forwarded. "Copy" remains
+// as a secondary option for users who'd rather reach out directly without
+// Nucleus facilitating.
+function DraftIntro({ talentId, startupId, talent, startup, draft, existing, onSubmitted }: {
+  talentId: string; startupId: string;
+  talent: string; startup: string; draft: string;
+  existing: { id: string; status: string; message?: string } | null;
+  onSubmitted: (intro: { id: string; status: string; message?: string }) => void;
+}) {
+  const [open, setOpen] = useState(!!existing);
+  const [body, setBody] = useState(existing?.message ?? draft);
+  const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Reset textarea contents whenever a new cached draft comes in.
-  useEffect(() => { setBody(draft); }, [draft]);
+  useEffect(() => { setBody(existing?.message ?? draft); }, [draft, existing?.message]);
+  useEffect(() => { if (existing) setOpen(true); }, [existing?.id]);
+
+  const submitted = !!existing;
+  const statusLabel = !submitted ? '' :
+    existing.status === 'introduced' ? 'Introduced' :
+    existing.status === 'declined'   ? 'Declined' :
+                                       'Awaiting Nucleus review';
+
+  async function submit() {
+    setSubmitting(true);
+    try {
+      const r = await api.createIntro(talentId, startupId, body.trim());
+      onSubmitted({ id: r.id, status: r.status, message: body.trim() });
+      toast('Submitted to Nucleus. They\'ll review and forward.', 'success');
+    } catch (e) {
+      toast(`Couldn't submit: ${(e as Error).message}`, 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   async function copy() {
     try {
@@ -506,7 +534,7 @@ function DraftIntro({ talent, startup, draft }: { talent: string; startup: strin
   }
 
   return (
-    <Section title="Draft my own intro" icon={<Mail className="w-3.5 h-3.5" />}>
+    <Section title={submitted ? 'Your intro' : 'Send an intro'} icon={<Mail className="w-3.5 h-3.5" />}>
       {!open ? (
         <button
           onClick={() => setOpen(true)}
@@ -514,34 +542,72 @@ function DraftIntro({ talent, startup, draft }: { talent: string; startup: strin
         >
           <div className="flex items-center justify-between gap-3">
             <div>
-              <div className="text-sm font-semibold text-nucleus-ink">Write the first email yourself</div>
-              <div className="text-xs text-nucleus-subtle mt-0.5">Claude pre-drafted a personalized intro from {talent} to {startup}. Edit, copy, send.</div>
+              <div className="text-sm font-semibold text-nucleus-ink">Submit your draft to Nucleus</div>
+              <div className="text-xs text-nucleus-subtle mt-0.5">Claude pre-drafted a personalized intro from {talent} to {startup}. Edit, then submit — Nucleus reviews and forwards.</div>
             </div>
             <ChevronDown className="w-4 h-4 text-nucleus-accent2 shrink-0 group-hover:translate-y-0.5 transition-transform" />
           </div>
         </button>
       ) : (
-        <div className="rounded-lg border hairline bg-white p-4">
-          <div className="text-[10px] uppercase tracking-widest text-nucleus-subtle font-semibold mb-2">
-            From {talent} → {startup}
+        <div className={`rounded-lg border p-4 ${submitted ? 'bg-nucleus-cream/40 border-nucleus-accent2/40' : 'bg-white hairline'}`}>
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="text-[10px] uppercase tracking-widest text-nucleus-subtle font-semibold">
+              From {talent} → {startup}
+            </div>
+            {submitted && (
+              <span className={`text-[10px] uppercase tracking-widest font-semibold px-2 py-0.5 rounded-full ${
+                existing.status === 'introduced' ? 'bg-emerald-100 text-emerald-700' :
+                existing.status === 'declined'   ? 'bg-red-100 text-red-700' :
+                                                   'bg-nucleus-accent2/15 text-nucleus-accent2'
+              }`}>
+                {statusLabel}
+              </span>
+            )}
           </div>
-          <textarea
-            className="w-full text-sm text-nucleus-ink leading-relaxed bg-nucleus-cream/40 border hairline rounded-lg p-3 resize-none focus:outline-none focus:border-nucleus-accent2"
-            rows={Math.max(7, Math.ceil(body.length / 70))}
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-          />
-          <div className="mt-3 flex items-center justify-between gap-2">
-            <button
-              onClick={copy}
-              className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-nucleus-ink text-nucleus-cream hover:opacity-90 transition-opacity"
-            >
-              {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-              {copied ? 'Copied' : 'Copy email'}
-            </button>
-            <button onClick={() => setOpen(false)} className="text-xs text-nucleus-subtle hover:text-nucleus-ink">
-              Collapse
-            </button>
+          {submitted ? (
+            <div className="text-sm text-nucleus-ink leading-relaxed whitespace-pre-line bg-white border hairline rounded-lg p-3">
+              {body}
+            </div>
+          ) : (
+            <textarea
+              className="w-full text-sm text-nucleus-ink leading-relaxed bg-nucleus-cream/40 border hairline rounded-lg p-3 resize-none focus:outline-none focus:border-nucleus-accent2"
+              rows={Math.max(7, Math.ceil(body.length / 70))}
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+            />
+          )}
+          <div className="mt-3 flex items-center justify-between gap-2 flex-wrap">
+            {submitted ? (
+              <span className="text-xs text-nucleus-subtle">
+                {existing.status === 'introduced' ? 'Email forwarded by Nucleus.' :
+                 existing.status === 'declined'   ? 'Nucleus declined to facilitate.' :
+                                                    'Nucleus will review and forward.'}
+              </span>
+            ) : (
+              <>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={submit}
+                    disabled={submitting || body.trim().length < 20}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-full bg-nucleus-accent text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
+                  >
+                    {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                    Submit to Nucleus
+                  </button>
+                  <button
+                    onClick={copy}
+                    className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-full border hairline text-nucleus-ink hover:bg-nucleus-cream transition-colors"
+                    title="Copy to send directly without Nucleus"
+                  >
+                    {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                    {copied ? 'Copied' : 'Or copy & send directly'}
+                  </button>
+                </div>
+                <button onClick={() => setOpen(false)} className="text-xs text-nucleus-subtle hover:text-nucleus-ink">
+                  Collapse
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
