@@ -8,13 +8,14 @@
 // Anything below #4 is supporting; the bullets are the product.
 
 import * as Dialog from '@radix-ui/react-dialog';
-import { useEffect, useState } from 'react';
-import { api, pipe, pretty, type MatchExplain } from '@/lib/api';
+import { useEffect, useMemo, useState } from 'react';
+import { api, pipe, pretty, type MatchExplain, type MatchSuggestion } from '@/lib/api';
 import { Avatar, StartupLogo } from './Avatar.tsx';
 import { ScoreDonut } from './ScoreDonut.tsx';
 import { RadarFit } from './RadarFit.tsx';
-import { Sparkles, Brain, Network as NetworkIcon, Telescope, Loader2, Send, ChevronDown } from 'lucide-react';
+import { Sparkles, Brain, Network as NetworkIcon, Telescope, Loader2, Send, ChevronDown, Target, Mail, Check, Plus, Copy } from 'lucide-react';
 import { toast } from './Toast.tsx';
+import { roadmap } from '@/lib/roadmap';
 
 interface Props {
   talentId: string;
@@ -194,6 +195,16 @@ export function MatchExplainDrawer({ talentId, startupId, open, onOpenChange }: 
                       ))}
                     </ul>
                   </Section>
+                )}
+
+                {/* Close the gap — actionable */}
+                {data.suggestions && data.suggestions.length > 0 && (
+                  <CloseTheGap talentId={talentId} startupId={startupId} suggestions={data.suggestions} score={data.score} />
+                )}
+
+                {/* Draft your own intro */}
+                {data.outreachDraft && (
+                  <DraftIntro talent={data.talent?.name ?? 'you'} startup={data.startup?.name ?? 'them'} draft={data.outreachDraft} />
                 )}
 
                 {/* Provenance */}
@@ -387,5 +398,155 @@ function UpskillingCalcOut({ score, dim }: { score: number; dim: { skills: numbe
         <span className="font-semibold tabular-nums">~{projected}</span> — a <span className="font-semibold">+{lift}-point</span> lift.
       </div>
     </div>
+  );
+}
+
+// ----- Close the gap: actionable suggestions list -----
+function CloseTheGap({ talentId, startupId, suggestions, score }: {
+  talentId: string; startupId: string; suggestions: MatchSuggestion[]; score: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const [, setNudge] = useState(0); // bump to force re-render after roadmap.add
+  const totalLift = useMemo(() => suggestions.reduce((sum, s) => sum + s.points, 0), [suggestions]);
+
+  function addOne(s: MatchSuggestion) {
+    roadmap.add(talentId, {
+      title: s.title,
+      body: s.body,
+      dimension: s.dimension,
+      points: s.points,
+      sourceStartupId: startupId,
+    });
+    setNudge((n) => n + 1);
+    toast(`Added "${s.title}" to your roadmap.`, 'success');
+  }
+  function addAll() {
+    suggestions.forEach((s) => roadmap.add(talentId, {
+      title: s.title, body: s.body, dimension: s.dimension, points: s.points, sourceStartupId: startupId,
+    }));
+    setNudge((n) => n + 1);
+    toast(`Added ${suggestions.length} tasks to your roadmap.`, 'success');
+  }
+
+  return (
+    <Section title="Close the gap" icon={<Target className="w-3.5 h-3.5" />}>
+      {!open ? (
+        <button
+          onClick={() => setOpen(true)}
+          className="w-full text-left rounded-lg border-2 border-dashed border-nucleus-accent/40 bg-nucleus-cream/40 hover:bg-nucleus-cream hover:border-nucleus-accent transition-all p-4 group"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-sm font-semibold text-nucleus-ink">Improve this score with {suggestions.length} concrete steps</div>
+              <div className="text-xs text-nucleus-subtle mt-0.5">Specific, named actions — not generic advice. Estimated total lift: <span className="font-semibold text-nucleus-accent">+{totalLift} points</span> → ~{Math.min(99, score + totalLift)}.</div>
+            </div>
+            <ChevronDown className="w-4 h-4 text-nucleus-accent shrink-0 group-hover:translate-y-0.5 transition-transform" />
+          </div>
+        </button>
+      ) : (
+        <div className="space-y-3">
+          {suggestions.map((s, i) => {
+            const already = roadmap.has(talentId, { title: s.title, sourceStartupId: startupId });
+            return (
+              <div key={i} className="rounded-lg border hairline bg-white p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-nucleus-ink">{s.title}</div>
+                    <div className="text-xs text-nucleus-subtle mt-1 leading-relaxed">{s.body}</div>
+                  </div>
+                  <span className="shrink-0 inline-flex items-center gap-1 text-[10px] uppercase tracking-widest font-semibold text-nucleus-accent2">
+                    <span className="px-1.5 py-0.5 rounded bg-nucleus-accent2/10">+{s.points}</span>
+                    <span>{s.dimension}</span>
+                  </span>
+                </div>
+                <button
+                  onClick={() => addOne(s)}
+                  disabled={already}
+                  className={`mt-3 inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-full transition-all ${
+                    already
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : 'bg-nucleus-ink text-nucleus-cream hover:opacity-90'
+                  }`}
+                >
+                  {already ? (<><Check className="w-3 h-3" /> In your roadmap</>) : (<><Plus className="w-3 h-3" /> Add to my roadmap</>)}
+                </button>
+              </div>
+            );
+          })}
+          <div className="flex items-center justify-between gap-3 pt-1">
+            <button onClick={addAll} className="text-xs text-nucleus-accent font-semibold hover:underline">
+              Add all to my roadmap
+            </button>
+            <button onClick={() => setOpen(false)} className="text-xs text-nucleus-subtle hover:text-nucleus-ink">
+              Collapse
+            </button>
+          </div>
+        </div>
+      )}
+    </Section>
+  );
+}
+
+// ----- Draft my own intro: AI-generated first email, editable, copyable -----
+function DraftIntro({ talent, startup, draft }: { talent: string; startup: string; draft: string }) {
+  const [open, setOpen] = useState(false);
+  const [body, setBody] = useState(draft);
+  const [copied, setCopied] = useState(false);
+
+  // Reset textarea contents whenever a new cached draft comes in.
+  useEffect(() => { setBody(draft); }, [draft]);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(body);
+      setCopied(true);
+      toast('Draft copied to clipboard.', 'success');
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      toast('Couldn\'t copy. Select the text and copy manually.', 'error');
+    }
+  }
+
+  return (
+    <Section title="Draft my own intro" icon={<Mail className="w-3.5 h-3.5" />}>
+      {!open ? (
+        <button
+          onClick={() => setOpen(true)}
+          className="w-full text-left rounded-lg border-2 border-dashed border-nucleus-accent2/40 bg-nucleus-cream/40 hover:bg-nucleus-cream hover:border-nucleus-accent2 transition-all p-4 group"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-sm font-semibold text-nucleus-ink">Write the first email yourself</div>
+              <div className="text-xs text-nucleus-subtle mt-0.5">Claude pre-drafted a personalized intro from {talent} to {startup}. Edit, copy, send.</div>
+            </div>
+            <ChevronDown className="w-4 h-4 text-nucleus-accent2 shrink-0 group-hover:translate-y-0.5 transition-transform" />
+          </div>
+        </button>
+      ) : (
+        <div className="rounded-lg border hairline bg-white p-4">
+          <div className="text-[10px] uppercase tracking-widest text-nucleus-subtle font-semibold mb-2">
+            From {talent} → {startup}
+          </div>
+          <textarea
+            className="w-full text-sm text-nucleus-ink leading-relaxed bg-nucleus-cream/40 border hairline rounded-lg p-3 resize-none focus:outline-none focus:border-nucleus-accent2"
+            rows={Math.max(7, Math.ceil(body.length / 70))}
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+          />
+          <div className="mt-3 flex items-center justify-between gap-2">
+            <button
+              onClick={copy}
+              className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-nucleus-ink text-nucleus-cream hover:opacity-90 transition-opacity"
+            >
+              {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+              {copied ? 'Copied' : 'Copy email'}
+            </button>
+            <button onClick={() => setOpen(false)} className="text-xs text-nucleus-subtle hover:text-nucleus-ink">
+              Collapse
+            </button>
+          </div>
+        </div>
+      )}
+    </Section>
   );
 }

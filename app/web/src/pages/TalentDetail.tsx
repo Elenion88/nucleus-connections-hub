@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { api, pipe, pretty, type Talent, type Startup, type MatchDimensions } from '@/lib/api';
 import { Avatar, StartupLogo } from '@/components/Avatar.tsx';
@@ -6,6 +6,7 @@ import { ScoreDonut } from '@/components/ScoreDonut.tsx';
 import { MatchExplainDrawer } from '@/components/MatchExplainDrawer.tsx';
 import { MiniRadar } from '@/components/MiniRadar.tsx';
 import { BridgeView, type BridgeEdge } from '@/components/BridgeView.tsx';
+import { RoadmapPanel } from '@/components/RoadmapPanel.tsx';
 import { toast } from '@/components/Toast.tsx';
 import { Send } from 'lucide-react';
 
@@ -19,6 +20,7 @@ export function TalentDetail() {
   const [edges, setEdges] = useState<BridgeEdge[]>([]);
   const [bridgeFilter, setBridgeFilter] = useState<{ id: string; label: string; matchIds: string[] } | null>(null);
   const [introsForFocal, setIntrosForFocal] = useState<Map<string, string>>(new Map()); // startupId → status
+  const startupMap = useMemo(() => Object.fromEntries(matches.map((m) => [m.startup.id, m.startup])), [matches]);
 
   useEffect(() => {
     if (!id) return;
@@ -67,6 +69,8 @@ export function TalentDetail() {
             <FactGroup label="Mission" pills={pipe(talent.missionTags)} variant="sage" />
             <FactGroup label="Affiliations" pills={pipe(talent.affiliations)} />
           </div>
+
+          <RoadmapPanel talentId={talent.id} startupMap={startupMap} />
         </aside>
 
         <section className="md:col-span-2">

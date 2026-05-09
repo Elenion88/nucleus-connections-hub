@@ -211,6 +211,8 @@ function cacheKey(talentId: string, startupId: string) {
   return createHash('sha1').update(`${talentId}|${startupId}`).digest('hex');
 }
 
+export interface Suggestion { title: string; body: string; dimension: string; points: number }
+
 export function getCachedExplanation(talentId: string, startupId: string) {
   const key = cacheKey(talentId, startupId);
   const row = sqlite.prepare('SELECT * FROM match_cache WHERE id = ?').get(key) as any;
@@ -222,6 +224,8 @@ export function getCachedExplanation(talentId: string, startupId: string) {
     headline = tp[0].replace('__headline__:', '');
     talkingPoints = tp.slice(1);
   }
+  let suggestions: Suggestion[] = [];
+  try { if (row.suggestions) suggestions = JSON.parse(row.suggestions); } catch { /* ignore */ }
   return {
     score: row.score as number,
     dimensions: JSON.parse(row.dimensions),
@@ -229,6 +233,8 @@ export function getCachedExplanation(talentId: string, startupId: string) {
     gaps: JSON.parse(row.gaps) as string[],
     talkingPoints,
     headline,
+    suggestions,
+    outreachDraft: (row.outreach_draft as string | null) ?? '',
   };
 }
 
@@ -240,17 +246,19 @@ export function saveExplanation(
   whyBullets: string[],
   gaps: string[],
   talkingPoints: string[],
-  headline: string = ''
+  headline: string = '',
+  suggestions: Suggestion[] = [],
+  outreachDraft: string = '',
 ) {
   const key = cacheKey(talentId, startupId);
-  // We piggyback `headline` onto the talking_points JSON via a wrapper if the column doesn't exist —
-  // but it's cleaner to add it. Use a JSON wrapper for talking_points instead so we don't need a migration.
   sqlite
     .prepare(
-      `INSERT INTO match_cache (id, talent_id, startup_id, score, dimensions, why_bullets, gaps, talking_points, generated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO match_cache (id, talent_id, startup_id, score, dimensions, why_bullets, gaps, talking_points, suggestions, outreach_draft, generated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(id) DO UPDATE SET score=excluded.score, dimensions=excluded.dimensions,
-         why_bullets=excluded.why_bullets, gaps=excluded.gaps, talking_points=excluded.talking_points, generated_at=excluded.generated_at`
+         why_bullets=excluded.why_bullets, gaps=excluded.gaps, talking_points=excluded.talking_points,
+         suggestions=excluded.suggestions, outreach_draft=excluded.outreach_draft,
+         generated_at=excluded.generated_at`
     )
     .run(
       key,
@@ -262,6 +270,8 @@ export function saveExplanation(
       JSON.stringify(gaps),
       // Pack headline as the first array element prefixed with "__headline__:" so we don't need a schema change
       JSON.stringify(headline ? [`__headline__:${headline}`, ...talkingPoints] : talkingPoints),
+      JSON.stringify(suggestions),
+      outreachDraft,
       Math.floor(Date.now() / 1000)
     );
 }
@@ -271,16 +281,25 @@ export async function explainMatch(t: Talent, s: Startup, scored: RawScored): Pr
   whyBullets: string[];
   gaps: string[];
   talkingPoints: string[];
+  suggestions: Suggestion[];
+  outreachDraft: string;
 }> {
   const sys = `You are an analyst for The Nucleus Institute, a Utah deep-tech matchmaking org.
 Given a talent profile and a startup profile, write a tight, specific explanation of why they are a match.
 Be concrete: cite specific skills, affiliations, sectors, mission tags, or experience that overlap.
 Do not be generic ("strong leader"). Do not flatter. If the fit is partial, say so honestly.
-Return STRICT JSON with FOUR keys:
+Return STRICT JSON with SIX keys:
 - headline (string): one declarative sentence, <= 28 words, that names the single sharpest reason this match makes sense. Use real names. Example: "Sarah's two FDA Class III submissions at Recursion are exactly the regulatory bench NeuroTouch needs to clear its 18-month Breakthrough Device pathway."
 - why (string[3]): three more reasons, one sentence each, <= 22 words.
 - gaps (string[1..2]): partial-fit caveats, honest, one sentence each.
-- talkingPoints (string[2]): concrete questions for the intro conversation.`;
+- talkingPoints (string[2]): concrete questions for the intro conversation.
+- suggestions (array of 2-3 objects): specific actionable steps the TALENT could take to close their weakest dimension and improve this match's score. Each object has:
+    title (string, <= 8 words, imperative — e.g. "Reach out to Olivia Park"),
+    body (string, one sentence, <= 24 words, naming a SPECIFIC person/course/event/credential. No generic advice.),
+    dimension (one of: skills | sector | stage | mission | network — which dim this lifts),
+    points (integer 2-8 — estimated point lift on the composite score).
+  The suggestions must reference real names, real institutions, real skills from the profiles. Never say "consider gaining experience" — name the lab, the certification, the person.
+- outreach (string, 80-130 words): a first email the TALENT could send DIRECTLY to the startup founders. Tone: warm, specific, confident, no business-jargon. Open with a single concrete reference to the startup's actual situation (cite their oneliner, their TRL, their immediate needs). Middle: one sentence on why the talent is uniquely useful, citing one specific thing from their bio. Close: a soft ask for a 20-minute conversation. Do not include subject line or signature placeholders. No markdown formatting. Just the body.`;
 
   const user = `TALENT
 Name: ${t.name}
@@ -306,18 +325,28 @@ Description: ${s.description}
 
 Per-dimension fit (0-100): skills=${scored.dimensions.skills}, sector=${scored.dimensions.sector}, stage=${scored.dimensions.stage}, mission=${scored.dimensions.mission}, network=${scored.dimensions.network}. Composite=${scored.score}.`;
 
-  const out = await chatJSON<{ headline: string; why: string[]; gaps: string[]; talkingPoints: string[] }>(
+  const out = await chatJSON<{
+    headline: string; why: string[]; gaps: string[]; talkingPoints: string[];
+    suggestions: Suggestion[]; outreach: string;
+  }>(
     [
       { role: 'system', content: sys },
       { role: 'user', content: user },
     ],
-    { tier: 'smart', temperature: 0.4, maxTokens: 700 }
+    { tier: 'smart', temperature: 0.45, maxTokens: 1200 }
   );
   return {
     headline: out.headline ?? '',
     whyBullets: (out.why ?? []).slice(0, 3),
     gaps: (out.gaps ?? []).slice(0, 2),
     talkingPoints: (out.talkingPoints ?? []).slice(0, 2),
+    suggestions: (out.suggestions ?? []).slice(0, 3).map((s) => ({
+      title: String(s.title ?? '').slice(0, 80),
+      body: String(s.body ?? '').slice(0, 240),
+      dimension: ['skills', 'sector', 'stage', 'mission', 'network'].includes(s.dimension) ? s.dimension : 'network',
+      points: Math.max(2, Math.min(8, Math.round(Number(s.points) || 3))),
+    })),
+    outreachDraft: String(out.outreach ?? '').slice(0, 1200),
   };
 }
 

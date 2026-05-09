@@ -59,6 +59,7 @@ async function warmPair(talentId: string, startupId: string) {
     saveExplanation(
       talentId, startupId, scored.score, scored.dimensions,
       explained.whyBullets, explained.gaps, explained.talkingPoints, explained.headline,
+      explained.suggestions, explained.outreachDraft,
     );
     console.log(`  + ${talentId} ↔ ${startupId} (warmed, score ${scored.score})`);
   } catch (e) {

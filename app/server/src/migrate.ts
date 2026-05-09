@@ -72,6 +72,8 @@ CREATE TABLE IF NOT EXISTS match_cache (
   why_bullets TEXT NOT NULL,
   gaps TEXT NOT NULL,
   talking_points TEXT NOT NULL,
+  suggestions TEXT,
+  outreach_draft TEXT,
   generated_at INTEGER
 );
 CREATE INDEX IF NOT EXISTS idx_match_cache_talent ON match_cache(talent_id);
@@ -90,4 +92,14 @@ CREATE TABLE IF NOT EXISTS intro_request (
 `;
 
 sqlite.exec(ddl);
+
+// Defensive ALTERs for existing DBs that pre-date the new columns. SQLite
+// raises "duplicate column" if they already exist; swallow that.
+function safeAlter(sql: string) {
+  try { sqlite.exec(sql); } catch (e) {
+    if (!String((e as Error).message).match(/duplicate column/i)) throw e;
+  }
+}
+safeAlter(`ALTER TABLE match_cache ADD COLUMN suggestions TEXT`);
+safeAlter(`ALTER TABLE match_cache ADD COLUMN outreach_draft TEXT`);
 console.log('migrated');

@@ -30,6 +30,13 @@ export interface Startup {
 
 export interface MatchDimensions { skills: number; sector: number; stage: number; mission: number; network: number; }
 
+export interface MatchSuggestion {
+  title: string;
+  body: string;
+  dimension: string;   // skills | sector | stage | mission | network
+  points: number;      // estimated +pts on composite
+}
+
 export interface MatchExplain {
   cached: boolean;
   score: number;
@@ -37,7 +44,9 @@ export interface MatchExplain {
   whyBullets: string[];
   gaps: string[];
   talkingPoints: string[];
-  headline?: string;             // one-sentence synthesized lead
+  headline?: string;
+  suggestions?: MatchSuggestion[];
+  outreachDraft?: string;
   talent?: Talent;
   startup?: Startup;
 }

@@ -79,6 +79,8 @@ export const matchCache = sqliteTable('match_cache', {
   whyBullets: text('why_bullets').notNull(),             // JSON string[]
   gaps: text('gaps').notNull(),                          // JSON string[]
   talkingPoints: text('talking_points').notNull(),       // JSON string[]
+  suggestions: text('suggestions'),                      // JSON: [{title, body, dimension, points}] — gap-closing actions
+  outreachDraft: text('outreach_draft'),                 // free-text first email Sarah could send
   generatedAt: integer('generated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 

@@ -60,6 +60,8 @@ matchRoutes.get('/explain/:talentId/:startupId', async (c) => {
       gaps: cached.gaps,
       talkingPoints: cached.talkingPoints,
       headline: cached.headline,
+      suggestions: cached.suggestions,
+      outreachDraft: cached.outreachDraft,
       talent: stripTalentVecs(t),
       startup: stripStartupVecs(s),
     });
@@ -70,7 +72,8 @@ matchRoutes.get('/explain/:talentId/:startupId', async (c) => {
   const explained = await explainMatch(t, s, scored);
   saveExplanation(
     talentId, startupId, scored.score, scored.dimensions,
-    explained.whyBullets, explained.gaps, explained.talkingPoints, explained.headline
+    explained.whyBullets, explained.gaps, explained.talkingPoints, explained.headline,
+    explained.suggestions, explained.outreachDraft,
   );
   return c.json({
     cached: false,
@@ -80,6 +83,8 @@ matchRoutes.get('/explain/:talentId/:startupId', async (c) => {
     gaps: explained.gaps,
     talkingPoints: explained.talkingPoints,
     headline: explained.headline,
+    suggestions: explained.suggestions,
+    outreachDraft: explained.outreachDraft,
     talent: stripTalentVecs(t),
     startup: stripStartupVecs(s),
   });
