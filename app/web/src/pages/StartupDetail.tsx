@@ -72,7 +72,7 @@ export function StartupDetail() {
           <div className="mb-6">
             <div className="flex items-baseline justify-between mb-3">
               <h2 className="display text-xl font-semibold">Network bridge</h2>
-              <span className="text-xs text-nucleus-subtle hidden md:inline">Why each top operator connects — institutions · sectors · missions · direct edges</span>
+              <span className="text-xs text-nucleus-subtle hidden md:inline">Why each top candidate connects — institutions · sectors · missions · direct edges</span>
             </div>
             {startup && matches.length > 0 && (
               <BridgeView
@@ -93,6 +93,7 @@ export function StartupDetail() {
                   affiliations: pipe(m.talent.affiliations),
                   sectors: pipe(m.talent.sectors),
                   mission: pipe(m.talent.missionTags),
+                  roleLabel: pretty(m.talent.roleType),
                 }))}
                 edges={edges.filter((e) => e.from === startup.id || e.to === startup.id)}
                 onSelectBridge={setBridgeFilter}
@@ -116,7 +117,7 @@ export function StartupDetail() {
             {matches.length > 0 && matches[0].score < 65 && (
               <div className="card p-4 border-l-4 border-l-nucleus-accent2 bg-nucleus-cream/40 text-sm">
                 <div className="font-semibold">No strong matches yet.</div>
-                <div className="text-nucleus-subtle mt-1">Top score is {matches[0].score}, below our 65 threshold for "high-confidence." Consider broadening immediate needs, or wait — we'll notify you as new operators sign up.</div>
+                <div className="text-nucleus-subtle mt-1">Top score is {matches[0].score}, below our 65 threshold for "high-confidence." Consider broadening immediate needs, or wait — we'll notify you as new candidates sign up.</div>
               </div>
             )}
             {matches.slice(0, 6).map((m) => {

@@ -15,7 +15,7 @@ const TALENT_STEPS: Step[] = [
 const STARTUP_STEPS: Step[] = [
   { Icon: Pencil,        label: 'Drop your deck excerpt', sub: 'Or a lab page, or one paragraph' },
   { Icon: Wand2,         label: 'Review the wizard',      sub: 'Claude structures it · you edit any field' },
-  { Icon: Sparkles,      label: 'See ranked operators',   sub: 'Per-dimension breakdown · network bridge' },
+  { Icon: Sparkles,      label: 'See ranked candidates',  sub: 'Per-dimension breakdown · network bridge' },
   { Icon: Handshake, label: 'Push to Affinity',       sub: 'One click · the Nucleus team facilitates' },
 ];
 

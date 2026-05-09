@@ -29,6 +29,7 @@ export interface BridgeMatch {
   affiliations: string[];
   sectors: string[];
   mission: string[];
+  roleLabel?: string;   // e.g. "Founder", "Advisor", "Investor" — shown instead of generic "Operator"
 }
 
 export interface BridgeEdge {
@@ -251,6 +252,7 @@ export function BridgeView({
             score={m.score}
             rank={m.rank}
             kind={m.kind}
+            roleLabel={m.roleLabel}
             connected={isConnected(m.id, bridges)}
             active={matchIsActive(m.id)}
             selected={m.id === selectedMatchId}
@@ -393,9 +395,10 @@ function BridgeNode({ x, y, label, kind, count, selected, dimmed, onClick, delay
   );
 }
 
-function MatchNode({ x, y, label, score, rank, kind, connected, active, selected, onClick, delay, compact = false }: {
+function MatchNode({ x, y, label, score, rank, kind, roleLabel, connected, active, selected, onClick, delay, compact = false }: {
   x: number; y: number; label: string; score: number; rank: number;
-  kind: 'talent' | 'startup'; connected: boolean; active: boolean; selected: boolean;
+  kind: 'talent' | 'startup'; roleLabel?: string;
+  connected: boolean; active: boolean; selected: boolean;
   onClick: () => void; delay: number; compact?: boolean;
 }) {
   const baseOp = connected ? 1 : 0.5;
@@ -427,7 +430,7 @@ function MatchNode({ x, y, label, score, rank, kind, connected, active, selected
       </text>
       <text x={x + labelOffset} y={y + (compact ? 12 : 14)} fontSize={compact ? 8 : 10} fontWeight={600} fill="#9aa0ad"
             style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-        {kind === 'startup' ? 'Startup' : 'Operator'}{connected ? '' : ' · skills only'}{selected ? ' · selected' : ''}
+        {roleLabel ?? (kind === 'startup' ? 'Startup' : 'Candidate')}{connected ? '' : ' · skills only'}{selected ? ' · selected' : ''}
       </text>
     </motion.g>
   );

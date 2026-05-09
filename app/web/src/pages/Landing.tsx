@@ -22,10 +22,10 @@ export function Landing() {
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
               <div className="text-xs text-nucleus-subtle">For The Nucleus Institute · Utah</div>
               <h1 className="display text-4xl md:text-5xl xl:text-6xl font-semibold mt-5 leading-[1.05]">
-                Utah's deep tech runs on people <span className="text-nucleus-accent">who aren't on LinkedIn.</span>
+                Utah's deep tech doesn't fail in the lab. <span className="text-nucleus-accent">It fails at the market match.</span>
               </h1>
               <p className="text-base md:text-lg text-nucleus-subtle mt-5 leading-relaxed">
-                A live AI matcher for U of U / BYU / USU spinouts and the operators, mentors, advisors, investors, and service providers who can move them.
+                AI matching that shows its work — built for U of U / BYU / USU spinouts and the people who can move them: founders, executives, advisors, mentors, investors, and service providers.
               </p>
               <div className="mt-7 flex gap-3 flex-wrap items-center">
                 <Link to="/story" className="btn-primary">
@@ -36,7 +36,7 @@ export function Landing() {
                 </Link>
               </div>
               <div className="mt-7 text-xs text-nucleus-subtle">
-                39 operators · 18 startups · five Connections-Hub buckets · Affinity-bound
+                39 candidates · 18 startups · five Connections-Hub buckets · Affinity-bound
               </div>
             </motion.div>
 
@@ -57,10 +57,10 @@ export function Landing() {
           <h2 className="display text-2xl md:text-3xl font-semibold">How it works.</h2>
           <div className="mt-7 space-y-7 text-base md:text-lg leading-relaxed text-nucleus-ink">
             <p>
-              <span className="text-nucleus-subtle">Today,</span> an operator submits a Typeform on the Nucleus contact page. It lands in Affinity. Nucleus reviews. Maybe an intro happens, weeks later. Today, a startup is added to Affinity by hand. There's no matching pass at all.
+              <span className="text-nucleus-subtle">Today,</span> a candidate submits a Typeform on the Nucleus contact page — whether they're a fractional executive, a free-time mentor, an advisor, an investor, or a service provider. It lands in Affinity. Nucleus reviews. Maybe an intro happens, weeks later. Startups are added by hand. There's no matching pass at all.
             </p>
             <p>
-              <span className="text-nucleus-ink font-semibold">With Nucleus AI,</span> both sides paste a paragraph. Profiles populate in seconds. An operator sees their top five startups <em>before they submit</em>, with a per-dimension breakdown — skills, sector, stage, mission, network — and a one-paragraph plain-English explanation grounded in the actual Utah ecosystem. A founder sees ranked candidates the moment they hit save.
+              <span className="text-nucleus-ink font-semibold">With Nucleus AI,</span> both sides paste a paragraph. Profiles populate in seconds. A candidate sees their top five startups <em>before they submit</em>, with a per-dimension breakdown — skills, sector, stage, mission, network — and a one-paragraph plain-English explanation grounded in the actual Utah ecosystem. A founder sees ranked candidates the moment they hit save.
             </p>
             <p>
               Approved matches push back into Affinity automatically — same CRM, same workflow, no data migration. The Nucleus team approves, the matcher does the triage.

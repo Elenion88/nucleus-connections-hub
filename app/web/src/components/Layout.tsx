@@ -1,6 +1,5 @@
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useEffect, useRef, useState } from 'react';
-import { Play, ChevronDown, User, Building2, Shield, Eye } from 'lucide-react';
+import { Play, User, Building2, Shield, Eye } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
 export function Layout() {
@@ -11,6 +10,7 @@ export function Layout() {
   const isHome = loc.pathname === '/';
   return (
     <div className="min-h-screen flex flex-col">
+      <PersonaToggle />
       <header className="bg-nucleus-paper border-b hairline sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center gap-3 md:gap-6">
           <Link to="/" className="flex items-center gap-2 md:gap-2.5 group">
@@ -46,7 +46,6 @@ export function Layout() {
                 <Play className="w-3 h-3 fill-current" /> Story
               </Link>
             )}
-            <PersonaMenu />
           </div>
         </div>
       </header>
@@ -66,70 +65,48 @@ export function Layout() {
   );
 }
 
-interface Persona { key: string; label: string; sub: string; href: string; Icon: typeof User }
+interface Persona { key: string; label: string; short: string; href: string; Icon: typeof User; match: (path: string) => boolean }
 const PERSONAS: Persona[] = [
-  { key: 'visitor', label: 'Visitor',         sub: 'Landing · overview',           href: '/',                         Icon: Eye },
-  { key: 'sarah',   label: 'Sarah Chen',      sub: 'Operator · ex-Recursion VP',   href: '/demo/talent/sarah',        Icon: User },
-  { key: 'neuro',   label: 'NeuroTouch Bio',  sub: 'Founder · neural implant',     href: '/demo/startup/neurotouch',  Icon: Building2 },
-  { key: 'admin',   label: 'Nucleus admin',   sub: 'Nick · curator view',          href: '/nucleus',                  Icon: Shield },
+  { key: 'visitor', label: 'Visitor',        short: 'Visitor',    href: '/',                        Icon: Eye,        match: (p) => p === '/' || p === '/story' },
+  { key: 'sarah',   label: 'Sarah Chen',     short: 'Sarah',      href: '/demo/talent/sarah',       Icon: User,       match: (p) => p.includes('/demo/talent/') || p.startsWith('/talent/') },
+  { key: 'neuro',   label: 'NeuroTouch Bio', short: 'NeuroTouch', href: '/demo/startup/neurotouch', Icon: Building2,  match: (p) => p.includes('/demo/startup/') || p.startsWith('/startup/') },
+  { key: 'admin',   label: 'Nucleus admin',  short: 'Admin',      href: '/nucleus',                 Icon: Shield,     match: (p) => p.startsWith('/nucleus') || p.startsWith('/discover') },
 ];
 
-function PersonaMenu() {
-  const [open, setOpen] = useState(false);
-  const [active, setActive] = useState<string>('visitor');
-  const ref = useRef<HTMLDivElement | null>(null);
+function PersonaToggle() {
+  const loc = useLocation();
   const nav = useNavigate();
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  const current = PERSONAS.find((p) => p.key === active) ?? PERSONAS[0];
-  const CurrentIcon = current.Icon;
+  const path = loc.pathname;
+  const activeKey = PERSONAS.find((p) => p.match(path))?.key ?? 'visitor';
 
   return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs border hairline bg-white hover:border-nucleus-accent/40 transition-colors"
-        aria-haspopup="menu"
-        aria-expanded={open}
-      >
-        <CurrentIcon className="w-3.5 h-3.5 text-nucleus-subtle" />
-        <span className="hidden sm:inline text-nucleus-ink font-medium">{current.label}</span>
-        <ChevronDown className="w-3 h-3 text-nucleus-subtle" />
-      </button>
-      {open && (
-        <div role="menu" className="absolute right-0 mt-2 w-72 rounded-xl2 border hairline bg-white shadow-xl py-1.5 z-40">
-          <div className="px-3 py-2 text-[10px] uppercase tracking-widest text-nucleus-subtle border-b hairline">View as…</div>
-          {PERSONAS.map((p) => {
-            const Icon = p.Icon;
-            const isActive = p.key === active;
-            return (
-              <button
-                key={p.key}
-                role="menuitem"
-                onClick={() => { setActive(p.key); setOpen(false); nav(p.href); }}
-                className={cn(
-                  'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-nucleus-cream transition-colors',
-                  isActive && 'bg-nucleus-cream/60',
-                )}
-              >
-                <Icon className="w-4 h-4 mt-0.5 text-nucleus-accent shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium text-nucleus-ink">{p.label}</div>
-                  <div className="text-xs text-nucleus-subtle">{p.sub}</div>
-                </div>
-              </button>
-            );
-          })}
-          <div className="px-3 py-2 text-[10px] text-nucleus-subtle border-t hairline">Demo only · no auth</div>
-        </div>
-      )}
+    <div className="fixed top-3 md:top-4 right-3 md:right-6 z-40">
+      <div className="text-[9px] uppercase tracking-[0.18em] text-nucleus-subtle font-semibold mb-1.5 text-center">
+        Demo · view as
+      </div>
+      <div className="inline-flex items-center bg-white border hairline rounded-full p-1 shadow-lg">
+        {PERSONAS.map((p) => {
+          const Icon = p.Icon;
+          const isActive = p.key === activeKey;
+          return (
+            <button
+              key={p.key}
+              onClick={() => nav(p.href)}
+              aria-pressed={isActive}
+              title={p.label}
+              className={cn(
+                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all',
+                isActive
+                  ? 'bg-nucleus-ink text-nucleus-cream shadow-soft'
+                  : 'text-nucleus-subtle hover:text-nucleus-ink hover:bg-nucleus-cream',
+              )}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">{p.short}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

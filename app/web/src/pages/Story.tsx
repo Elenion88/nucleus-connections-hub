@@ -177,7 +177,7 @@ function TitleScene() {
       </motion.div>
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
         <div className="display text-4xl md:text-6xl font-semibold text-nucleus-cream leading-tight">
-          Utah deep tech finds its operators
+          Utah deep tech finds its people
           <span className="block text-nucleus-accent mt-2">in 30 seconds.</span>
         </div>
         <p className="text-base md:text-lg text-white/60 mt-6 max-w-2xl mx-auto">
@@ -231,7 +231,7 @@ function TalentScene() {
     <div className="max-w-4xl w-full">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
         className="text-[11px] uppercase tracking-widest text-nucleus-accent2 mb-3">
-        Step 2 · The operator
+        Step 2 · The candidate
       </motion.div>
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
         className="bg-nucleus-cream text-nucleus-ink rounded-xl2 p-7 shadow-soft">
@@ -386,7 +386,7 @@ function WhyScene({ progress }: { progress: number }) {
               initial={{ opacity: 0, x: -12 }}
               animate={{ opacity: visible ? 1 : 0, x: visible ? 0 : -12 }}
               transition={{ duration: 0.4 }}
-              className="bg-nucleus-cream text-nucleus-ink rounded-lg p-4 shadow-soft flex gap-3 text-sm md:text-base"
+              className="bg-white text-nucleus-ink rounded-lg p-4 shadow-lg flex gap-3 text-sm md:text-base"
             >
               <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-nucleus-accent shrink-0" />
               <span>{r}</span>
