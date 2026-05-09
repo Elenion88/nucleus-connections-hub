@@ -1,0 +1,29 @@
+{
+  "name": "nucleus-server",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "migrate": "tsx src/migrate.ts",
+    "seed:generate": "tsx scripts/generate-dataset.ts",
+    "seed:load": "tsx scripts/load-seed.ts",
+    "seed:embed": "tsx scripts/embed-all.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.14.0",
+    "better-sqlite3": "^11.8.0",
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.39.0",
+    "hono": "^4.7.0",
+    "nanoid": "^5.1.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/node": "^22.0.0",
+    "drizzle-kit": "^0.30.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

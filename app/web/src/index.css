@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body, #root { height: 100%; }
+  body {
+    @apply bg-nucleus-cream text-nucleus-ink font-sans antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+  .display { @apply font-display tracking-tight; }
+  .hairline { @apply border-nucleus-line; }
+}
+
+@layer components {
+  .card {
+    @apply bg-nucleus-paper rounded-xl2 shadow-soft border border-nucleus-line/60;
+  }
+  .pill {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+  .pill-soft { @apply pill bg-nucleus-cream border border-nucleus-line text-nucleus-subtle; }
+  .pill-accent { @apply pill bg-nucleus-accent/10 text-nucleus-accent border border-nucleus-accent/20; }
+  .pill-sage { @apply pill bg-nucleus-accent2/10 text-nucleus-accent2 border border-nucleus-accent2/20; }
+
+  .btn { @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed; }
+  .btn-primary { @apply btn bg-nucleus-ink text-nucleus-cream hover:bg-nucleus-deep; }
+  .btn-accent { @apply btn bg-nucleus-accent text-white hover:bg-nucleus-accent/90; }
+  .btn-ghost { @apply btn text-nucleus-ink hover:bg-nucleus-cream; }
+  .btn-outline { @apply btn border border-nucleus-line bg-white hover:bg-nucleus-cream; }
+
+  .input {
+    @apply w-full rounded-lg border border-nucleus-line bg-white px-3 py-2 text-nucleus-ink placeholder:text-nucleus-subtle/70 focus:outline-none focus:ring-2 focus:ring-nucleus-accent/40 focus:border-nucleus-accent/40;
+  }
+  .label { @apply block text-sm font-medium text-nucleus-ink mb-1.5; }
+  .helper { @apply mt-1 text-xs text-nucleus-subtle; }
+}
+
+/* hand-drawn dotted background */
+.dot-grid {
+  background-image: radial-gradient(rgba(12,21,37,.07) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+/* Score donut */
+.score-donut {
+  background:
+    conic-gradient(var(--score-color, #c4794a) calc(var(--score-pct,0)*1%), rgba(12,21,37,.08) 0);
+}

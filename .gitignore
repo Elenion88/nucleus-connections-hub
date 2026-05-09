@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+build/
+.vite/
+
+# Environment files (never commit)
+.env
+.env.local
+.env.*.local
+
+# Local databases (regenerate via npm run seed:load)
+*.db
+*.db-shm
+*.db-wal
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Misc
+.cache/
+coverage/

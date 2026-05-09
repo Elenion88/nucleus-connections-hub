@@ -1,0 +1,458 @@
+[
+  {
+    "id": "t_sarah_chen",
+    "kind": "talent",
+    "label": "Sarah Chen",
+    "sector": "life_sciences",
+    "x": -0.18645742362781093,
+    "y": -0.6686820650001023
+  },
+  {
+    "id": "t_devon_park",
+    "kind": "talent",
+    "label": "Devon Park",
+    "sector": "defense",
+    "x": -0.587127129048306,
+    "y": 0.0861399216010399
+  },
+  {
+    "id": "t_priya_anand",
+    "kind": "talent",
+    "label": "Priya Anand",
+    "sector": "life_sciences",
+    "x": -0.28076123763758465,
+    "y": -0.5024979583161895
+  },
+  {
+    "id": "t_tom_brigham",
+    "kind": "talent",
+    "label": "Tom Brigham",
+    "sector": "software",
+    "x": -0.35970724052076175,
+    "y": 0.8163415085060561
+  },
+  {
+    "id": "t_ana_morales",
+    "kind": "talent",
+    "label": "Ana Morales",
+    "sector": "energy",
+    "x": -0.4179174747672474,
+    "y": 0.18994496288918294
+  },
+  {
+    "id": "t_marcus_lee",
+    "kind": "talent",
+    "label": "Marcus Lee",
+    "sector": "software",
+    "x": -0.43286025008826556,
+    "y": 0.4549247597676814
+  },
+  {
+    "id": "t_jenna_ryu",
+    "kind": "talent",
+    "label": "Jenna Ryu",
+    "sector": "advanced_manufacturing",
+    "x": -0.620074491421419,
+    "y": -0.16610089669997788
+  },
+  {
+    "id": "t_kai_wang",
+    "kind": "talent",
+    "label": "Kai Wang",
+    "sector": "ai",
+    "x": -0.5880071555318998,
+    "y": -0.0314378457596264
+  },
+  {
+    "id": "t_olivia_park",
+    "kind": "talent",
+    "label": "Olivia Park",
+    "sector": "life_sciences",
+    "x": -0.38331153085203734,
+    "y": -1
+  },
+  {
+    "id": "t_dani_oliveira",
+    "kind": "talent",
+    "label": "Dani Oliveira",
+    "sector": "software",
+    "x": -0.5038498402281801,
+    "y": 0.46571168625717696
+  },
+  {
+    "id": "t_yoel_haddad",
+    "kind": "talent",
+    "label": "Yoel Haddad",
+    "sector": "advanced_manufacturing",
+    "x": -0.6196913836053668,
+    "y": -0.08470720965636637
+  },
+  {
+    "id": "t_isabel_finch",
+    "kind": "talent",
+    "label": "Isabel Finch",
+    "sector": "advanced_manufacturing",
+    "x": -0.6211631260671201,
+    "y": -0.20677438964069214
+  },
+  {
+    "id": "t_ben_okafor",
+    "kind": "talent",
+    "label": "Ben Okafor",
+    "sector": "cyber",
+    "x": -0.5506705719414967,
+    "y": 0.06624481836218231
+  },
+  {
+    "id": "t_riley_white",
+    "kind": "talent",
+    "label": "Riley White",
+    "sector": "fintech",
+    "x": -0.26321339733827637,
+    "y": 0.7668421861761636
+  },
+  {
+    "id": "t_grace_lin",
+    "kind": "talent",
+    "label": "Grace Lin",
+    "sector": "defense",
+    "x": -0.4298569560055157,
+    "y": 0.32222122419850985
+  },
+  {
+    "id": "t_jared_pike",
+    "kind": "talent",
+    "label": "Jared Pike",
+    "sector": "life_sciences",
+    "x": -0.4480978453010769,
+    "y": -0.0532184942393831
+  },
+  {
+    "id": "t_helena_strom",
+    "kind": "talent",
+    "label": "Helena Strom",
+    "sector": "fintech",
+    "x": -0.5134921259105965,
+    "y": 0.14846521144505656
+  },
+  {
+    "id": "t_owen_vaughn",
+    "kind": "talent",
+    "label": "Owen Vaughn",
+    "sector": "software",
+    "x": -0.49735690920802333,
+    "y": 0.4709140354476325
+  },
+  {
+    "id": "t_mira_okonjo",
+    "kind": "talent",
+    "label": "Mira Okonjo",
+    "sector": "ai",
+    "x": -0.5673137288225889,
+    "y": 0.06547776661436917
+  },
+  {
+    "id": "t_sam_archer",
+    "kind": "talent",
+    "label": "Sam Archer",
+    "sector": "life_sciences",
+    "x": -0.47814827345404914,
+    "y": -0.49097282732375797
+  },
+  {
+    "id": "t_rachel_vance",
+    "kind": "talent",
+    "label": "Rachel Vance",
+    "sector": "energy",
+    "x": -0.45984348267970815,
+    "y": 0.4464486825757729
+  },
+  {
+    "id": "t_noah_grant",
+    "kind": "talent",
+    "label": "Noah Grant",
+    "sector": "advanced_manufacturing",
+    "x": -0.6502682453198515,
+    "y": -0.10703371765043708
+  },
+  {
+    "id": "t_dr_rashid_lee",
+    "kind": "talent",
+    "label": "Dr. Rashid Lee",
+    "sector": "life_sciences",
+    "x": -0.2889290246314216,
+    "y": -0.7117789833646722
+  },
+  {
+    "id": "t_dr_julia_hart",
+    "kind": "talent",
+    "label": "Dr. Julia Hart",
+    "sector": "ai",
+    "x": -0.43687077098898314,
+    "y": 0.018513591196260084
+  },
+  {
+    "id": "t_carlos_renteria",
+    "kind": "talent",
+    "label": "Carlos Renteria",
+    "sector": "defense",
+    "x": -0.5432669375294505,
+    "y": 0.4333234774638326
+  },
+  {
+    "id": "t_natalie_okada",
+    "kind": "talent",
+    "label": "Natalie Okada",
+    "sector": "life_sciences",
+    "x": -0.4351275607508683,
+    "y": -0.8730262664881958
+  },
+  {
+    "id": "t_kev_armstrong",
+    "kind": "talent",
+    "label": "Kev Armstrong",
+    "sector": "software",
+    "x": -0.07495631008555186,
+    "y": 0.6407610984800971
+  },
+  {
+    "id": "t_alex_sun",
+    "kind": "talent",
+    "label": "Alex Sun",
+    "sector": "ai",
+    "x": -0.6002810446458718,
+    "y": 0.0903309652905645
+  },
+  {
+    "id": "t_lila_hashimoto",
+    "kind": "talent",
+    "label": "Lila Hashimoto",
+    "sector": "life_sciences",
+    "x": -0.466448437332604,
+    "y": -0.515717850556726
+  },
+  {
+    "id": "t_quinn_blair",
+    "kind": "talent",
+    "label": "Quinn Blair",
+    "sector": "energy",
+    "x": -0.4656042733317702,
+    "y": -0.4598364331326866
+  },
+  {
+    "id": "t_evan_holt",
+    "kind": "talent",
+    "label": "Evan Holt",
+    "sector": "software",
+    "x": -0.36206393826685673,
+    "y": 0.5389186841314725
+  },
+  {
+    "id": "t_juno_park",
+    "kind": "talent",
+    "label": "Juno Park",
+    "sector": "fintech",
+    "x": -0.3662827983696398,
+    "y": 0.5865876218510684
+  },
+  {
+    "id": "t_ramon_villa",
+    "kind": "talent",
+    "label": "Ramon Villa",
+    "sector": "cyber",
+    "x": -0.6218798989609725,
+    "y": 0.2639738584987253
+  },
+  {
+    "id": "t_anika_shah",
+    "kind": "talent",
+    "label": "Anika Shah",
+    "sector": "fintech",
+    "x": -0.4101272274192898,
+    "y": 0.5738786808637603
+  },
+  {
+    "id": "t_morgan_ash",
+    "kind": "talent",
+    "label": "Morgan Ash",
+    "sector": "life_sciences",
+    "x": -0.37857532045240144,
+    "y": -0.7118978083890746
+  },
+  {
+    "id": "t_amelia_redford",
+    "kind": "talent",
+    "label": "Amelia Redford",
+    "sector": "life_sciences",
+    "x": 0.07895357703867714,
+    "y": -0.12948374427627948
+  },
+  {
+    "id": "t_carlos_renteria_vc",
+    "kind": "talent",
+    "label": "Carlos Rentería",
+    "sector": "defense",
+    "x": -0.18099892076559637,
+    "y": 0.15035989780413642
+  },
+  {
+    "id": "t_kara_levitt",
+    "kind": "talent",
+    "label": "Kara Levitt",
+    "sector": "life_sciences",
+    "x": -0.2602334813175384,
+    "y": -0.8382159965303395
+  },
+  {
+    "id": "t_studio_meridian",
+    "kind": "talent",
+    "label": "Jude Petersen (Studio Meridian)",
+    "sector": "life_sciences",
+    "x": -0.2237441257987584,
+    "y": -0.07296888476881272
+  },
+  {
+    "id": "st_neurotouch",
+    "kind": "startup",
+    "label": "NeuroTouch Bio",
+    "sector": "life_sciences",
+    "x": 0.9037853664199307,
+    "y": -0.3555958629453468
+  },
+  {
+    "id": "st_silicell",
+    "kind": "startup",
+    "label": "SiliCell Compute",
+    "sector": "advanced_manufacturing",
+    "x": 0.8806429669037229,
+    "y": -0.10279532125388077
+  },
+  {
+    "id": "st_aerolith",
+    "kind": "startup",
+    "label": "Aerolith Defense",
+    "sector": "defense",
+    "x": 0.8507127911212782,
+    "y": -0.21345926786752698
+  },
+  {
+    "id": "st_kestrel",
+    "kind": "startup",
+    "label": "Kestrel Cyber",
+    "sector": "cyber",
+    "x": 0.9698386262567352,
+    "y": 0.22359169662095993
+  },
+  {
+    "id": "st_arrasti",
+    "kind": "startup",
+    "label": "Arrasti Energy",
+    "sector": "energy",
+    "x": 0.9706961402538675,
+    "y": -0.045609310147399204
+  },
+  {
+    "id": "st_lumalign",
+    "kind": "startup",
+    "label": "Lumalign Therapeutics",
+    "sector": "life_sciences",
+    "x": 0.8670792118435273,
+    "y": -0.44473719593915323
+  },
+  {
+    "id": "st_terraform",
+    "kind": "startup",
+    "label": "TerraForm Ag",
+    "sector": "ai",
+    "x": 0.9908219650278367,
+    "y": 0.19904680003512068
+  },
+  {
+    "id": "st_provident",
+    "kind": "startup",
+    "label": "Provident Underwriting",
+    "sector": "fintech",
+    "x": 0.8617120412423848,
+    "y": 0.26772279110731734
+  },
+  {
+    "id": "st_palisade",
+    "kind": "startup",
+    "label": "Palisade Robotics",
+    "sector": "advanced_manufacturing",
+    "x": 0.8741705489117506,
+    "y": -0.050110272617872556
+  },
+  {
+    "id": "st_cipherframe",
+    "kind": "startup",
+    "label": "Cipherframe",
+    "sector": "cyber",
+    "x": 0.92649718424854,
+    "y": 0.22653909615768072
+  },
+  {
+    "id": "st_pluvial",
+    "kind": "startup",
+    "label": "Pluvial Climate",
+    "sector": "ai",
+    "x": 1,
+    "y": 0.14861818893871573
+  },
+  {
+    "id": "st_quartzline",
+    "kind": "startup",
+    "label": "Quartzline Photonics",
+    "sector": "advanced_manufacturing",
+    "x": 0.9745495319826829,
+    "y": 0.26594493693274357
+  },
+  {
+    "id": "st_stillwater",
+    "kind": "startup",
+    "label": "Stillwater Bioscience",
+    "sector": "life_sciences",
+    "x": 0.9003194416832201,
+    "y": -0.42121122224308916
+  },
+  {
+    "id": "st_argosvine",
+    "kind": "startup",
+    "label": "Argos Vine",
+    "sector": "ai",
+    "x": 0.971016262508728,
+    "y": 0.1946734645383878
+  },
+  {
+    "id": "st_sentry",
+    "kind": "startup",
+    "label": "Sentry SaaS",
+    "sector": "software",
+    "x": 0.9063220962549481,
+    "y": 0.4040156133230365
+  },
+  {
+    "id": "st_meadowlark",
+    "kind": "startup",
+    "label": "Meadowlark Wealth",
+    "sector": "fintech",
+    "x": 0.939871121293913,
+    "y": 0.2341653297013656
+  },
+  {
+    "id": "st_apex",
+    "kind": "startup",
+    "label": "Apex Reactor",
+    "sector": "energy",
+    "x": 0.827346000018407,
+    "y": -0.09432148017561423
+  },
+  {
+    "id": "st_helio",
+    "kind": "startup",
+    "label": "Helio Trial Ops",
+    "sector": "ai",
+    "x": 0.8802450170145981,
+    "y": -0.408451251792871
+  }
+]
