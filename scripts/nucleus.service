@@ -1,0 +1,18 @@
+[Unit]
+Description=Nucleus Connections Hub (Hono + static SPA)
+After=network.target
+
+[Service]
+Type=simple
+User=kokomo
+WorkingDirectory=/home/kokomo/dev/nucleus-connections-hub/app/server
+Environment=NODE_ENV=production
+EnvironmentFile=/home/kokomo/dev/nucleus-connections-hub/app/server/.env
+ExecStart=/usr/bin/npm start
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
