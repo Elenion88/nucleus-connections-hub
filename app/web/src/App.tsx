@@ -13,6 +13,7 @@ import { StartupSignup } from './pages/StartupSignup.tsx';
 import { EmbedPreview } from './pages/EmbedPreview.tsx';
 import { Story } from './pages/Story.tsx';
 import { JoinChooser } from './pages/JoinChooser.tsx';
+import { GuidedDemo } from './pages/GuidedDemo.tsx';
 
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
           <Route path="/join/talent" element={<TalentSignup />} />
           <Route path="/join/startup" element={<StartupSignup />} />
           <Route path="/embed-preview" element={<EmbedPreview />} />
+          <Route path="/demo/:side/:who" element={<GuidedDemo />} />
         </Route>
       </Routes>
     </ErrorBoundary>

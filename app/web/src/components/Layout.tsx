@@ -6,9 +6,7 @@ import { cn } from '@/lib/cn';
 export function Layout() {
   const loc = useLocation();
   const navItems = [
-    { to: '/', label: 'Home', match: (p: string) => p === '/' },
-    { to: '/discover?tab=startups', label: 'Startups', match: (p: string) => p.startsWith('/discover') && !p.includes('operators') || p.startsWith('/startup/') },
-    { to: '/discover?tab=operators', label: 'Operators', match: (p: string) => p.includes('operators') || p.startsWith('/talent/') },
+    { to: '/', label: 'Home',     match: (p: string) => p === '/' },
     { to: '/network', label: 'Network', match: (p: string) => p.startsWith('/network') },
   ];
   const isHome = loc.pathname === '/';
@@ -46,13 +44,10 @@ export function Layout() {
                 to="/story"
                 className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-nucleus-ink text-nucleus-cream hover:opacity-90 transition-opacity"
               >
-                <Play className="w-3 h-3 fill-current" /> Demo
+                <Play className="w-3 h-3 fill-current" /> Story
               </Link>
             )}
             <PersonaMenu />
-            <Link to="/discover?tab=operators" className="md:hidden text-sm text-nucleus-subtle hover:text-nucleus-ink">Browse</Link>
-            <Link to="/join" className="btn-outline hidden lg:inline-flex">For talent</Link>
-            <Link to="/join/startup" className="btn-accent text-sm">For startups</Link>
           </div>
         </div>
       </header>
@@ -74,10 +69,10 @@ export function Layout() {
 
 interface Persona { key: string; label: string; sub: string; href: string; Icon: typeof User }
 const PERSONAS: Persona[] = [
-  { key: 'visitor', label: 'Visitor', sub: 'Public view',                    href: '/',                       Icon: Eye },
-  { key: 'sarah',   label: 'Sarah Chen', sub: 'Operator · ex-Recursion VP',  href: '/talent/t_sarah_chen',    Icon: User },
-  { key: 'neuro',   label: 'NeuroTouch Bio', sub: 'Founder · neural implant', href: '/startup/st_neurotouch',  Icon: Building2 },
-  { key: 'admin',   label: 'Nucleus admin', sub: 'Nick · curator view',      href: '/nucleus',                Icon: Shield },
+  { key: 'visitor', label: 'Visitor',         sub: 'Landing · overview',           href: '/',                         Icon: Eye },
+  { key: 'sarah',   label: 'Sarah Chen',      sub: 'Operator · ex-Recursion VP',   href: '/demo/talent/sarah',        Icon: User },
+  { key: 'neuro',   label: 'NeuroTouch Bio',  sub: 'Founder · neural implant',     href: '/demo/startup/neurotouch',  Icon: Building2 },
+  { key: 'admin',   label: 'Nucleus admin',   sub: 'Nick · curator view',          href: '/nucleus',                  Icon: Shield },
 ];
 
 function PersonaMenu() {

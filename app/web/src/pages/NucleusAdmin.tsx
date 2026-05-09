@@ -111,6 +111,22 @@ export function NucleusAdmin() {
           </div>
 
           <div className="card p-6">
+            <div className="text-[10px] uppercase tracking-widest text-nucleus-accent font-semibold">Directory · admin</div>
+            <h3 className="display text-lg font-semibold mt-1">Browse the index</h3>
+            <p className="text-xs text-nucleus-subtle mt-1.5">Hidden from public nav. Use these to look up specific people or companies.</p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <a href="/discover?tab=startups" className="card p-3 hover:shadow-sm transition-shadow text-center">
+                <div className="display text-xl font-semibold tabular-nums">18</div>
+                <div className="text-[10px] uppercase tracking-widest text-nucleus-subtle">Startups</div>
+              </a>
+              <a href="/discover?tab=operators" className="card p-3 hover:shadow-sm transition-shadow text-center">
+                <div className="display text-xl font-semibold tabular-nums">39</div>
+                <div className="text-[10px] uppercase tracking-widest text-nucleus-subtle">Operators</div>
+              </a>
+            </div>
+          </div>
+
+          <div className="card p-6">
             <h3 className="display text-lg font-semibold">Squarespace embed</h3>
             <p className="text-xs text-nucleus-subtle mt-1">
               Drop-in replacement for the Typeform on nucleusutah.org/contact.
