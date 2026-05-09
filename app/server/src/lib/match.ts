@@ -75,10 +75,19 @@ function passHardFilters(t: Talent, s: Startup): { ok: boolean; reasons: string[
   return { ok: reasons.length === 0, reasons };
 }
 
-function sectorScore(t: Talent, s: Startup): number {
+// Categorical "exact sector" → graded 75-100 using skills-cosine as the
+// within-sector specificity signal. Two life-sciences candidates whose skill
+// embeddings differ in sub-domain (pediatric onc vs. neural interfaces) now
+// land at materially different sector scores even though both share the tag.
+function sectorScore(t: Talent, s: Startup, skillsCosine: number): number {
+  // Map cosine [-1, 1] → [0, 1], slightly biased so realistic 0.3-0.8 cosines
+  // give a useful spread rather than all rounding to ~0.7.
+  const refine = Math.max(0, Math.min(1, (skillsCosine + 0.15) / 1.0));
   const tSectors = pipeSet(t.sectors);
-  if (tSectors.has(s.sector)) return 100;
-  // Adjacent sectors — give partial credit
+
+  if (tSectors.has(s.sector)) {
+    return Math.round(75 + 25 * refine);   // 75–100
+  }
   const adjacent: Record<string, string[]> = {
     life_sciences: ['ai', 'advanced_manufacturing'],
     ai: ['software', 'cyber', 'life_sciences', 'defense'],
@@ -90,22 +99,31 @@ function sectorScore(t: Talent, s: Startup): number {
     software: ['ai', 'cyber', 'fintech'],
   };
   const adj = adjacent[s.sector] ?? [];
-  for (const a of adj) if (tSectors.has(a)) return 55;
-  return 15;
+  for (const a of adj) if (tSectors.has(a)) {
+    return Math.round(35 + 20 * refine); // 35–55
+  }
+  return Math.round(8 + 12 * refine);    // 8–20
 }
 
+// Stage: exact match still strong, but specificity matters — a candidate
+// listing a single stage preference is a sharper signal than one listing five.
 function stageScore(t: Talent, s: Startup): number {
   const tStages = pipeSet(t.stagePreference);
-  if (tStages.size === 0) return 70;
-  if (tStages.has(s.fundingStage)) return 100;
-  // Distance penalty
+  if (tStages.size === 0) return 65;
+  if (tStages.has(s.fundingStage)) {
+    // 1 stage → 100 (highly committed); 2 → 92; 3 → 86; 4+ → 80
+    if (tStages.size === 1) return 100;
+    if (tStages.size === 2) return 92;
+    if (tStages.size === 3) return 86;
+    return 80;
+  }
   const sIdx = STAGE_ORDER.indexOf(s.fundingStage);
   let best = 0;
   for (const st of tStages) {
     const i = STAGE_ORDER.indexOf(st);
     if (i < 0) continue;
     const dist = Math.abs(i - sIdx);
-    best = Math.max(best, Math.max(0, 100 - dist * 25));
+    best = Math.max(best, Math.max(0, 78 - dist * 22));
   }
   return best;
 }
@@ -115,15 +133,14 @@ function networkScore(t: Talent, s: Startup): number {
   const sRoots = pipeSet(s.utahRoots);
   let overlap = 0;
   for (const a of tAff) if (sRoots.has(a)) overlap += 1;
-  // Even one shared institution is a strong signal in Utah
   if (overlap === 0) {
-    // Soft proxy: any UT-rooted talent vs UT-rooted startup
     const utahInst = ['u_of_u', 'byu', 'usu', 'silicon_slopes'];
     const tHasUtah = utahInst.some((x) => tAff.has(x));
     const sHasUtah = utahInst.some((x) => sRoots.has(x));
     return tHasUtah && sHasUtah ? 35 : 10;
   }
-  return Math.min(100, 60 + overlap * 20);
+  // Smoother gradient: 1 → 70, 2 → 85, 3 → 100
+  return Math.min(100, 55 + overlap * 15);
 }
 
 interface VecRow {
@@ -168,7 +185,7 @@ export function rawScore(t: Talent, s: Startup): RawScored {
 
   const dim = {
     skills: Math.round(0.7 * cosTo100(skillsCosine) + 0.3 * cosTo100(expCosine)),
-    sector: sectorScore(t, s),
+    sector: sectorScore(t, s, skillsCosine),
     stage: stageScore(t, s),
     mission: cosTo100(missionCosine),
     network: networkScore(t, s),

@@ -27,10 +27,10 @@ const NEUROTOUCH = {
 
 const RADAR = [
   { label: 'Skills', value: 96 },
-  { label: 'Sector', value: 100 },
-  { label: 'Stage', value: 100 },
+  { label: 'Sector', value: 93 },
+  { label: 'Stage', value: 92 },
   { label: 'Mission', value: 100 },
-  { label: 'Network', value: 80 },
+  { label: 'Network', value: 70 },
 ];
 
 const HERO_SENTENCE = "Sarah's two FDA Class III submissions at Recursion are exactly the regulatory bench NeuroTouch needs to clear its 18-month Breakthrough Device pathway.";
