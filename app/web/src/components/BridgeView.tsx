@@ -290,12 +290,13 @@ function BridgeNode({ x, y, label, kind, count, selected, dimmed, onClick, delay
   selected: boolean; dimmed: boolean; onClick: () => void; delay: number;
 }) {
   const color = bridgeColor(kind);
-  // Wider boxes + larger label budget
-  const w = Math.min(200, Math.max(120, label.length * 9 + 32));
-  const h = 42;
+  // Two-line layout: label on top, count chip on bottom — keeps everything inside the pill
+  const w = Math.min(210, Math.max(130, label.length * 9 + 36));
+  const h = 56;
   const fillBg = selected ? color : 'white';
   const labelColor = selected ? 'white' : '#0c1525';
   const opacity = dimmed ? 0.25 : 1;
+  const countLabel = selected ? `selected · ${count}` : `${count} match${count === 1 ? '' : 'es'}`;
   return (
     <motion.g
       onClick={onClick}
@@ -304,21 +305,17 @@ function BridgeNode({ x, y, label, kind, count, selected, dimmed, onClick, delay
       transition={{ duration: 0.35, delay, ease: 'backOut' }}
       style={{ cursor: 'pointer' }}
     >
-      {/* hover ring (only when not selected) */}
-      {!selected && (
-        <rect x={x - w / 2 - 3} y={y - h / 2 - 3} width={w + 6} height={h + 6} rx={(h + 6) / 2}
-              fill="transparent" stroke={color} strokeWidth={0} className="bridge-hover-ring" />
-      )}
       <rect x={x - w / 2} y={y - h / 2} width={w} height={h} rx={h / 2}
             fill={fillBg} stroke={color} strokeWidth={selected ? 2.5 : 1.8} />
-      <text x={x} y={y + 1} textAnchor="middle" dominantBaseline="middle"
+      <text x={x} y={y - 6} textAnchor="middle" dominantBaseline="middle"
             fontSize={13.5} fontWeight={700} fill={labelColor}>
         {label}
       </text>
-      <text x={x} y={y + h / 2 + 12} textAnchor="middle"
-            fontSize={10} fontWeight={600} fill={selected ? color : color}
+      <text x={x} y={y + 14} textAnchor="middle" dominantBaseline="middle"
+            fontSize={9.5} fontWeight={600}
+            fill={selected ? 'rgba(255,255,255,0.9)' : color}
             style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-        {count} match{count === 1 ? '' : 'es'}{selected ? ' · selected' : ''}
+        {countLabel}
       </text>
     </motion.g>
   );

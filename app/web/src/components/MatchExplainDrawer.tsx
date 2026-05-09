@@ -127,7 +127,8 @@ export function MatchExplainDrawer({ talentId, startupId, open, onOpenChange }: 
                   </div>
                 )}
 
-                {/* HERO 2: the radar — was hidden in a Disclosure, now front and center */}
+                {/* The numbers: radar + bars + upskilling lift, all together so the
+                    quantitative picture lives in one panel. */}
                 <div className="card p-5 md:p-6">
                   <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-nucleus-subtle mb-3">
                     <Telescope className="w-3.5 h-3.5" />
@@ -164,10 +165,13 @@ export function MatchExplainDrawer({ talentId, startupId, open, onOpenChange }: 
                       ))}
                     </div>
                   </div>
+                  <div className="mt-4">
+                    <UpskillingCalcOut score={data.score} dim={data.dimensions} />
+                  </div>
                 </div>
 
-                {/* PRIMARY: why bullets */}
-                <Section title="Three more reasons" icon={<Sparkles className="w-3.5 h-3.5" />}>
+                {/* Positive evidence */}
+                <Section title="Why it works" icon={<Sparkles className="w-3.5 h-3.5" />}>
                   <ul className="space-y-2.5 text-sm">
                     {data.whyBullets.map((b, i) => (
                       <li key={i} className="flex gap-2.5">
@@ -178,11 +182,10 @@ export function MatchExplainDrawer({ talentId, startupId, open, onOpenChange }: 
                   </ul>
                 </Section>
 
-                {/* PRIMARY: gaps as upskilling */}
+                {/* Negative evidence — purely qualitative now; the quantitative lift moved up */}
                 {data.gaps.length > 0 && (
-                  <Section title="Closing the gap" icon={<Brain className="w-3.5 h-3.5" />}>
-                    <UpskillingCalcOut score={data.score} dim={data.dimensions} />
-                    <ul className="space-y-2.5 text-sm mt-3">
+                  <Section title="Where it falls short" icon={<Brain className="w-3.5 h-3.5" />}>
+                    <ul className="space-y-2.5 text-sm">
                       {data.gaps.map((b, i) => (
                         <li key={i} className="flex gap-2.5">
                           <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-nucleus-accent2 shrink-0" />
@@ -193,9 +196,9 @@ export function MatchExplainDrawer({ talentId, startupId, open, onOpenChange }: 
                   </Section>
                 )}
 
-                {/* PRIMARY: network bridge */}
+                {/* Provenance */}
                 {path && path.length > 1 && (
-                  <Section title="Network bridge" icon={<NetworkIcon className="w-3.5 h-3.5" />}>
+                  <Section title="How you're connected" icon={<NetworkIcon className="w-3.5 h-3.5" />}>
                     <NetworkPath path={path} />
                   </Section>
                 )}
