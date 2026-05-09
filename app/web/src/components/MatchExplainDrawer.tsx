@@ -197,16 +197,6 @@ export function MatchExplainDrawer({ talentId, startupId, open, onOpenChange }: 
                   </Section>
                 )}
 
-                {/* Close the gap — actionable */}
-                {data.suggestions && data.suggestions.length > 0 && (
-                  <CloseTheGap talentId={talentId} startupId={startupId} suggestions={data.suggestions} score={data.score} />
-                )}
-
-                {/* Draft your own intro */}
-                {data.outreachDraft && (
-                  <DraftIntro talent={data.talent?.name ?? 'you'} startup={data.startup?.name ?? 'them'} draft={data.outreachDraft} />
-                )}
-
                 {/* Provenance */}
                 {path && path.length > 1 && (
                   <Section title="How you're connected" icon={<NetworkIcon className="w-3.5 h-3.5" />}>
@@ -250,6 +240,14 @@ export function MatchExplainDrawer({ talentId, startupId, open, onOpenChange }: 
                     </FactPanel>
                   </div>
                 </Disclosure>
+
+                {/* ACTION-ORIENTED: paired with the footer's "Request intro" button */}
+                {data.suggestions && data.suggestions.length > 0 && (
+                  <CloseTheGap talentId={talentId} startupId={startupId} suggestions={data.suggestions} score={data.score} />
+                )}
+                {data.outreachDraft && (
+                  <DraftIntro talent={data.talent?.name ?? 'you'} startup={data.startup?.name ?? 'them'} draft={data.outreachDraft} />
+                )}
               </>
             )}
           </div>
