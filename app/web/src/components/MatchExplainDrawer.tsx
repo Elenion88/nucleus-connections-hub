@@ -42,10 +42,14 @@ export function MatchExplainDrawer({ talentId, startupId, open, onOpenChange }: 
     Promise.all([
       api.explain(talentId, startupId),
       api.pathBetween(talentId, startupId).catch(() => ({ path: null })),
+      api.intros().catch(() => []),
     ])
-      .then(([explain, p]) => {
+      .then(([explain, p, intros]) => {
         setData(explain);
         setPath(p.path ?? null);
+        if (Array.isArray(intros) && intros.some((i) => i.talentId === talentId && i.startupId === startupId)) {
+          setIntroSent(true);
+        }
       })
       .catch((e) => toast(`Couldn't load match: ${(e as Error).message}`, 'error'))
       .finally(() => setLoading(false));

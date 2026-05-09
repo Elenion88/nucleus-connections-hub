@@ -6,8 +6,8 @@ import { ScoreDonut } from '@/components/ScoreDonut.tsx';
 import { MatchExplainDrawer } from '@/components/MatchExplainDrawer.tsx';
 import { MiniRadar } from '@/components/MiniRadar.tsx';
 import { BridgeView, type BridgeEdge } from '@/components/BridgeView.tsx';
-import { MultiRadar } from '@/components/MultiRadar.tsx';
 import { toast } from '@/components/Toast.tsx';
+import { Send } from 'lucide-react';
 
 interface ScoredStartup { startup: Startup; score: number; dimensions: MatchDimensions; rank: number; total: number }
 
@@ -17,13 +17,25 @@ export function TalentDetail() {
   const [matches, setMatches] = useState<ScoredStartup[]>([]);
   const [activeStartup, setActiveStartup] = useState<string | null>(null);
   const [edges, setEdges] = useState<BridgeEdge[]>([]);
+  const [bridgeFilter, setBridgeFilter] = useState<{ id: string; label: string; matchIds: string[] } | null>(null);
+  const [introsForFocal, setIntrosForFocal] = useState<Map<string, string>>(new Map()); // startupId → status
 
   useEffect(() => {
     if (!id) return;
     api.talent(id).then(setTalent).catch((e) => toast(`Couldn't load profile: ${(e as Error).message}`, 'error'));
     api.matchesForTalent(id, 25).then((r) => setMatches(r.matches)).catch((e) => toast(`Couldn't load matches: ${(e as Error).message}`, 'error'));
     api.graph().then((g) => setEdges(g.edges)).catch(() => {});
+    refreshIntros();
   }, [id]);
+
+  function refreshIntros() {
+    if (!id) return;
+    api.intros().then((all) => {
+      const map = new Map<string, string>();
+      for (const i of all) if (i.talentId === id) map.set(i.startupId, i.status);
+      setIntrosForFocal(map);
+    }).catch(() => {});
+  }
 
   if (!talent) return <div className="max-w-6xl mx-auto px-6 py-10 text-nucleus-subtle">Loading…</div>;
 
@@ -84,33 +96,21 @@ export function TalentDetail() {
                   mission: pipe(m.startup.missionTags),
                 }))}
                 edges={edges.filter((e) => e.from === talent.id || e.to === talent.id)}
+                onSelectBridge={setBridgeFilter}
               />
             )}
           </div>
 
-          <div className="mb-6">
-            <div className="flex items-baseline justify-between mb-3">
-              <h2 className="display text-xl font-semibold">Compare top 5 at a glance</h2>
-              <span className="text-xs text-nucleus-subtle hidden md:inline">Each candidate as a translucent radar · where do they agree, where differ</span>
-            </div>
-            {matches.length > 0 && (
-              <div className="card p-5 md:p-6">
-                <MultiRadar
-                  axes={['Skills', 'Sector', 'Stage', 'Mission', 'Network']}
-                  series={matches.slice(0, 5).map((m) => ({
-                    id: m.startup.id,
-                    label: m.startup.name,
-                    rank: m.rank,
-                    values: [m.dimensions.skills, m.dimensions.sector, m.dimensions.stage, m.dimensions.mission, m.dimensions.network],
-                  }))}
-                />
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-baseline justify-between">
+          <div className="flex items-baseline justify-between flex-wrap gap-2">
             <h2 className="display text-2xl font-semibold">Top matches</h2>
-            <span className="text-xs text-nucleus-subtle">Tap a match to see the per-dimension breakdown.</span>
+            {bridgeFilter ? (
+              <span className="text-xs text-nucleus-ink">
+                Filtered to <span className="font-semibold">{bridgeFilter.label}</span> · {bridgeFilter.matchIds.length} match{bridgeFilter.matchIds.length === 1 ? '' : 'es'}
+                <button onClick={() => setBridgeFilter(null)} className="ml-2 underline text-nucleus-subtle hover:text-nucleus-ink">clear</button>
+              </span>
+            ) : (
+              <span className="text-xs text-nucleus-subtle">Tap a match to see the per-dimension breakdown.</span>
+            )}
           </div>
 
           <div className="mt-4 space-y-3">
@@ -120,11 +120,14 @@ export function TalentDetail() {
                 <div className="text-nucleus-subtle mt-1">Top score is {matches[0].score}, below our 65 threshold for "high-confidence." Consider broadening sectors or stage preference, or ask Nucleus to flag you for new startups as they sign up.</div>
               </div>
             )}
-            {matches.slice(0, 5).map((m) => (
+            {matches.slice(0, 5).map((m) => {
+              const inFilter = !bridgeFilter || bridgeFilter.matchIds.includes(m.startup.id);
+              const introStatus = introsForFocal.get(m.startup.id);
+              return (
               <button
                 key={m.startup.id}
                 onClick={() => setActiveStartup(m.startup.id)}
-                className="card p-4 md:p-5 hover:shadow-lg transition-shadow w-full text-left flex items-start md:items-center gap-3 md:gap-4"
+                className={`card p-4 md:p-5 hover:shadow-lg transition-all w-full text-left flex items-start md:items-center gap-3 md:gap-4 ${inFilter ? '' : 'opacity-30 hover:opacity-60'}`}
               >
                 <div className="flex flex-col items-center gap-1 shrink-0">
                   <ScoreDonut score={m.score} size={52} />
@@ -136,6 +139,11 @@ export function TalentDetail() {
                     <h3 className="display font-semibold text-base md:text-lg">{m.startup.name}</h3>
                     <span className="pill-soft">{pretty(m.startup.sector)}</span>
                     <span className="pill-soft hidden sm:inline-flex">{pretty(m.startup.fundingStage)}</span>
+                    {introStatus && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-nucleus-accent2/15 text-nucleus-accent2">
+                        <Send className="w-2.5 h-2.5" /> Intro {introStatus}
+                      </span>
+                    )}
                   </div>
                   <p className="text-sm text-nucleus-subtle mt-1 line-clamp-2">{m.startup.oneliner}</p>
                 </div>
@@ -144,7 +152,8 @@ export function TalentDetail() {
                 </div>
                 <div className="text-nucleus-accent text-sm font-medium shrink-0 hidden sm:block">Why? →</div>
               </button>
-            ))}
+              );
+            })}
           </div>
         </section>
       </div>
@@ -154,7 +163,7 @@ export function TalentDetail() {
           talentId={talent.id}
           startupId={activeStartup}
           open={!!activeStartup}
-          onOpenChange={(open) => { if (!open) setActiveStartup(null); }}
+          onOpenChange={(open) => { if (!open) { setActiveStartup(null); refreshIntros(); } }}
         />
       )}
     </div>

@@ -8,7 +8,7 @@
 // of this product — utah-specific network reasoning — finally lives where
 // a judge can see it.
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 
 export interface BridgeFocal {
@@ -81,18 +81,40 @@ const MISSION_LABELS: Record<string, string> = {
 };
 
 const W = 880;
-const H = 460;
-const PAD_T = 32;
-const PAD_B = 22;
+const H = 480;
+const PAD_T = 40;
+const PAD_B = 30;
 const FOCAL_X = 80;
 const BRIDGE_X = 380;
 const MATCH_X = 720;
 
 export function BridgeView({
-  focal, matches, edges = [],
-}: { focal: BridgeFocal; matches: BridgeMatch[]; edges?: BridgeEdge[] }) {
+  focal, matches, edges = [], onSelectBridge,
+}: {
+  focal: BridgeFocal;
+  matches: BridgeMatch[];
+  edges?: BridgeEdge[];
+  onSelectBridge?: (bridge: { id: string; label: string; matchIds: string[] } | null) => void;
+}) {
 
   const bridges = useMemo(() => buildBridges(focal, matches, edges), [focal, matches, edges]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  function selectBridge(id: string | null) {
+    const next = id === selectedId ? null : id;
+    setSelectedId(next);
+    if (!onSelectBridge) return;
+    if (next === null) {
+      onSelectBridge(null);
+    } else {
+      const b = bridges.find((x) => x.id === next);
+      if (b) onSelectBridge({ id: b.id, label: b.label, matchIds: b.matches });
+    }
+  }
+
+  const selectedBridge = bridges.find((b) => b.id === selectedId);
+  const dimMode = selectedBridge != null;
+  const matchIsActive = (mid: string) => !dimMode || (selectedBridge?.matches.includes(mid) ?? false);
 
   // Layout: vertically distribute bridges and matches
   const bridgeYs = layoutColumn(bridges.length, PAD_T, H - PAD_B);
@@ -118,30 +140,35 @@ export function BridgeView({
         <rect x="0" y="0" width={W} height={H} fill="url(#bvgrid)" />
 
         {/* Curves: focal → bridge (one per bridge) */}
-        {focalToBridge.map(({ b, y }, i) => (
-          <BridgeCurve
-            key={`fb-${b.id}`}
-            x1={FOCAL_X + 30} y1={focalY}
-            x2={BRIDGE_X - 80} y2={y}
-            color={bridgeColor(b.kind)}
-            weight={1 + b.matches.length * 0.4}
-            delay={i * 0.05}
-          />
-        ))}
+        {focalToBridge.map(({ b, y }, i) => {
+          const active = !dimMode || b.id === selectedId;
+          return (
+            <BridgeCurve
+              key={`fb-${b.id}`}
+              x1={FOCAL_X + 30} y1={focalY}
+              x2={BRIDGE_X - 90} y2={y}
+              color={bridgeColor(b.kind)}
+              weight={(1 + b.matches.length * 0.4) * (active ? 1 : 0.6)}
+              opacity={active ? 0.9 : 0.08}
+              delay={i * 0.05}
+            />
+          );
+        })}
 
         {/* Curves: bridge → each connected match */}
         {bridges.map((b) => b.matches.map((mid, j) => {
           const matchInfo = matchById.get(mid);
           const bridgeInfo = bridgeById.get(b.id);
           if (!matchInfo || !bridgeInfo) return null;
+          const active = !dimMode || b.id === selectedId;
           return (
             <BridgeCurve
               key={`bm-${b.id}-${mid}`}
-              x1={BRIDGE_X + 80} y1={bridgeInfo.y}
+              x1={BRIDGE_X + 90} y1={bridgeInfo.y}
               x2={MATCH_X - 24} y2={matchInfo.y}
               color={bridgeColor(b.kind)}
-              weight={1.2}
-              opacity={0.6}
+              weight={1.4}
+              opacity={active ? 0.65 : 0.05}
               delay={0.15 + j * 0.04}
             />
           );
@@ -158,6 +185,9 @@ export function BridgeView({
             label={b.label}
             kind={b.kind}
             count={b.matches.length}
+            selected={b.id === selectedId}
+            dimmed={dimMode && b.id !== selectedId}
+            onClick={() => selectBridge(b.id)}
             delay={i * 0.05}
           />
         ))}
@@ -172,20 +202,34 @@ export function BridgeView({
             rank={m.rank}
             kind={m.kind}
             connected={isConnected(m.id, bridges)}
+            active={matchIsActive(m.id)}
             delay={0.15 + i * 0.05}
           />
         ))}
       </svg>
 
-      <div className="border-t hairline px-4 py-2.5 flex items-center justify-between flex-wrap gap-2 text-[11px] text-nucleus-subtle">
+      <div className="border-t hairline px-4 py-3 flex items-center justify-between flex-wrap gap-2 text-xs text-nucleus-subtle">
         <div className="flex items-center gap-3 flex-wrap">
-          <span>Bridges: </span>
-          <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: bridgeColor('institution') }} /> Institution</span>
-          <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: bridgeColor('sector') }} /> Sector</span>
-          <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: bridgeColor('mission') }} /> Mission</span>
-          <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: bridgeColor('direct') }} /> Direct edge</span>
+          {selectedBridge ? (
+            <>
+              <span className="inline-flex items-center gap-1.5 text-nucleus-ink font-semibold">
+                <span className="w-2 h-2 rounded-full" style={{ background: bridgeColor(selectedBridge.kind) }} />
+                Filtering by {selectedBridge.label}
+              </span>
+              <span className="text-nucleus-subtle">{selectedBridge.matches.length} of {matches.length} matches share this bridge.</span>
+              <button onClick={() => selectBridge(null)} className="ml-1 px-2 py-0.5 text-[11px] rounded-full bg-nucleus-cream hover:bg-nucleus-line transition-colors">Clear</button>
+            </>
+          ) : (
+            <>
+              <span className="font-semibold text-nucleus-ink">Tap a bridge to filter:</span>
+              <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: bridgeColor('institution') }} /> Institution</span>
+              <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: bridgeColor('sector') }} /> Sector</span>
+              <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: bridgeColor('mission') }} /> Mission</span>
+              <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: bridgeColor('direct') }} /> Direct edge</span>
+            </>
+          )}
         </div>
-        <span>Curve weight = # of matches sharing the bridge</span>
+        <span className="hidden md:inline">Curve weight = # of matches sharing the bridge</span>
       </div>
     </div>
   );
@@ -225,67 +269,84 @@ function FocalNode({ x, y, label, kind }: { x: number; y: number; label: string;
   return (
     <g>
       <motion.circle
-        cx={x} cy={y} r={26}
+        cx={x} cy={y} r={32}
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.4, ease: 'backOut' }}
         fill={kind === 'startup' ? '#c4794a' : '#0c1525'}
         stroke="white" strokeWidth={3}
       />
-      <text x={x} y={y + 5} textAnchor="middle" fontSize={11} fontWeight={700} fill="white" pointerEvents="none">
+      <text x={x} y={y + 5} textAnchor="middle" fontSize={13} fontWeight={700} fill="white" pointerEvents="none">
         {initials(label)}
       </text>
-      <text x={x} y={y + 50} textAnchor="middle" fontSize={11} fontWeight={700} fill="#0c1525">{label}</text>
-      <text x={x} y={y + 64} textAnchor="middle" fontSize={9} fill="#9aa0ad" style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}>You</text>
+      <text x={x} y={y + 56} textAnchor="middle" fontSize={13} fontWeight={700} fill="#0c1525">{label}</text>
+      <text x={x} y={y + 72} textAnchor="middle" fontSize={10} fontWeight={600} fill="#9aa0ad" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>You</text>
     </g>
   );
 }
 
-function BridgeNode({ x, y, label, kind, count, delay }: {
-  x: number; y: number; label: string; kind: Bridge['kind']; count: number; delay: number;
+function BridgeNode({ x, y, label, kind, count, selected, dimmed, onClick, delay }: {
+  x: number; y: number; label: string; kind: Bridge['kind']; count: number;
+  selected: boolean; dimmed: boolean; onClick: () => void; delay: number;
 }) {
   const color = bridgeColor(kind);
-  // Approximate width based on label length
-  const w = Math.min(160, Math.max(96, label.length * 7 + 28));
+  // Wider boxes + larger label budget
+  const w = Math.min(200, Math.max(120, label.length * 9 + 32));
+  const h = 42;
+  const fillBg = selected ? color : 'white';
+  const labelColor = selected ? 'white' : '#0c1525';
+  const opacity = dimmed ? 0.25 : 1;
   return (
     <motion.g
+      onClick={onClick}
       initial={{ opacity: 0, scale: 0.85 }}
-      animate={{ opacity: 1, scale: 1 }}
+      animate={{ opacity, scale: 1 }}
       transition={{ duration: 0.35, delay, ease: 'backOut' }}
+      style={{ cursor: 'pointer' }}
     >
-      <rect x={x - w / 2} y={y - 16} width={w} height={32} rx={16}
-            fill="white" stroke={color} strokeWidth={1.5} />
-      <text x={x} y={y + 4} textAnchor="middle" fontSize={11.5} fontWeight={600} fill="#0c1525">
+      {/* hover ring (only when not selected) */}
+      {!selected && (
+        <rect x={x - w / 2 - 3} y={y - h / 2 - 3} width={w + 6} height={h + 6} rx={(h + 6) / 2}
+              fill="transparent" stroke={color} strokeWidth={0} className="bridge-hover-ring" />
+      )}
+      <rect x={x - w / 2} y={y - h / 2} width={w} height={h} rx={h / 2}
+            fill={fillBg} stroke={color} strokeWidth={selected ? 2.5 : 1.8} />
+      <text x={x} y={y + 1} textAnchor="middle" dominantBaseline="middle"
+            fontSize={13.5} fontWeight={700} fill={labelColor}>
         {label}
       </text>
-      <text x={x} y={y + 30} textAnchor="middle" fontSize={9} fill={color}
-            style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-        {count} match{count === 1 ? '' : 'es'}
+      <text x={x} y={y + h / 2 + 12} textAnchor="middle"
+            fontSize={10} fontWeight={600} fill={selected ? color : color}
+            style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+        {count} match{count === 1 ? '' : 'es'}{selected ? ' · selected' : ''}
       </text>
     </motion.g>
   );
 }
 
-function MatchNode({ x, y, label, score, rank, kind, connected, delay }: {
-  x: number; y: number; label: string; score: number; rank: number; kind: 'talent' | 'startup'; connected: boolean; delay: number;
+function MatchNode({ x, y, label, score, rank, kind, connected, active, delay }: {
+  x: number; y: number; label: string; score: number; rank: number;
+  kind: 'talent' | 'startup'; connected: boolean; active: boolean; delay: number;
 }) {
+  const baseOp = connected ? 1 : 0.5;
+  const opacity = active ? baseOp : 0.18;
   return (
     <motion.g
       initial={{ opacity: 0, x: 16 }}
-      animate={{ opacity: connected ? 1 : 0.45, x: 0 }}
+      animate={{ opacity, x: 0 }}
       transition={{ duration: 0.4, delay }}
     >
       {/* Score chip */}
-      <circle cx={x} cy={y} r={20}
+      <circle cx={x} cy={y} r={22}
               fill={connected ? '#0c1525' : '#9aa0ad'}
               stroke="white" strokeWidth={2.5} />
-      <text x={x} y={y + 4} textAnchor="middle" fontSize={12} fontWeight={700} fill="white">{score}</text>
+      <text x={x} y={y + 4} textAnchor="middle" fontSize={13} fontWeight={700} fill="white">{score}</text>
 
       {/* Label to right */}
-      <text x={x + 32} y={y - 2} fontSize={11.5} fontWeight={700} fill="#0c1525">
+      <text x={x + 34} y={y - 2} fontSize={13} fontWeight={700} fill="#0c1525">
         #{rank} {truncate(label, 22)}
       </text>
-      <text x={x + 32} y={y + 12} fontSize={9} fill="#9aa0ad"
+      <text x={x + 34} y={y + 14} fontSize={10} fontWeight={600} fill="#9aa0ad"
             style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}>
         {kind === 'startup' ? 'Startup' : 'Operator'}{connected ? '' : ' · skills only'}
       </text>
