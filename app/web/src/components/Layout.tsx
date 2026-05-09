@@ -6,8 +6,7 @@ import { cn } from '@/lib/cn';
 export function Layout() {
   const loc = useLocation();
   const navItems = [
-    { to: '/', label: 'Home',     match: (p: string) => p === '/' },
-    { to: '/network', label: 'Network', match: (p: string) => p.startsWith('/network') },
+    { to: '/', label: 'Home', match: (p: string) => p === '/' },
   ];
   const isHome = loc.pathname === '/';
   return (

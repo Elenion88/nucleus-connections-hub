@@ -88,13 +88,24 @@ const FOCAL_X = 80;
 const BRIDGE_X = 400;
 const MATCH_X = 720;
 
+// Compact rendering for the landing hero — same shape, tighter coords so the
+// chart reads at ~1:1 instead of being shrunk to 55%.
+const COMPACT_W = 580;
+const COMPACT_H = 380;
+const COMPACT_PAD_T = 24;
+const COMPACT_PAD_B = 24;
+const COMPACT_FOCAL_X = 60;
+const COMPACT_BRIDGE_X = 270;
+const COMPACT_MATCH_X = 470;
+
 export function BridgeView({
-  focal, matches, edges = [], onSelectBridge,
+  focal, matches, edges = [], onSelectBridge, compact = false,
 }: {
   focal: BridgeFocal;
   matches: BridgeMatch[];
   edges?: BridgeEdge[];
   onSelectBridge?: (bridge: { id: string; label: string; matchIds: string[] } | null) => void;
+  compact?: boolean;
 }) {
 
   const bridges = useMemo(() => buildBridges(focal, matches, edges), [focal, matches, edges]);
@@ -133,6 +144,15 @@ export function BridgeView({
 
   const selectedBridge = bridges.find((b) => b.id === selectedBridgeId);
   const dimMode = selectedBridge != null || selectedMatchId != null;
+
+  // Pick layout constants based on compact mode.
+  const W_   = compact ? COMPACT_W   : W;
+  const H_   = compact ? COMPACT_H   : H;
+  const PT   = compact ? COMPACT_PAD_T : PAD_T;
+  const PB   = compact ? COMPACT_PAD_B : PAD_B;
+  const FX   = compact ? COMPACT_FOCAL_X  : FOCAL_X;
+  const BX   = compact ? COMPACT_BRIDGE_X : BRIDGE_X;
+  const MX   = compact ? COMPACT_MATCH_X  : MATCH_X;
   const matchIsActive = (mid: string) => {
     if (!dimMode) return true;
     if (selectedBridge) return selectedBridge.matches.includes(mid);
@@ -146,9 +166,9 @@ export function BridgeView({
   };
 
   // Layout: vertically distribute bridges and matches
-  const bridgeYs = layoutColumn(bridges.length, PAD_T, H - PAD_B);
-  const matchYs = layoutColumn(matches.length, PAD_T, H - PAD_B);
-  const focalY = H / 2;
+  const bridgeYs = layoutColumn(bridges.length, PT, H_ - PB);
+  const matchYs = layoutColumn(matches.length, PT, H_ - PB);
+  const focalY = H_ / 2;
 
   const matchById = new Map(matches.map((m, i) => [m.id, { match: m, y: matchYs[i] }]));
   const bridgeById = new Map(bridges.map((b, i) => [b.id, { bridge: b, y: bridgeYs[i] }]));
@@ -159,14 +179,14 @@ export function BridgeView({
 
   return (
     <div className="rounded-xl2 border hairline bg-white overflow-hidden">
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" preserveAspectRatio="xMidYMid meet" className="block">
+      <svg viewBox={`0 0 ${W_} ${H_}`} width="100%" preserveAspectRatio="xMidYMid meet" className="block">
         {/* dot grid */}
         <defs>
-          <pattern id="bvgrid" x="0" y="0" width="22" height="22" patternUnits="userSpaceOnUse">
+          <pattern id={compact ? 'bvgrid-c' : 'bvgrid'} x="0" y="0" width="22" height="22" patternUnits="userSpaceOnUse">
             <circle cx="1" cy="1" r="0.7" fill="rgba(12,21,37,.05)" />
           </pattern>
         </defs>
-        <rect x="0" y="0" width={W} height={H} fill="url(#bvgrid)" />
+        <rect x="0" y="0" width={W_} height={H_} fill={`url(#${compact ? 'bvgrid-c' : 'bvgrid'})`} />
 
         {/* Curves: focal → bridge (one per bridge) */}
         {focalToBridge.map(({ b, y }, i) => {
@@ -174,11 +194,11 @@ export function BridgeView({
           return (
             <BridgeCurve
               key={`fb-${b.id}`}
-              x1={FOCAL_X + 30} y1={focalY}
-              x2={BRIDGE_X - 90} y2={y}
+              x1={FX + (compact ? 22 : 30)} y1={focalY}
+              x2={BX - (compact ? 60 : 90)} y2={y}
               color={bridgeColor(b.kind)}
-              weight={(1 + b.matches.length * 0.4) * (active ? 1 : 0.6)}
-              opacity={active ? 0.9 : 0.08}
+              weight={(2.4 + b.matches.length * 0.7) * (active ? 1 : 0.6)}
+              opacity={active ? 0.92 : 0.08}
               delay={i * 0.05}
             />
           );
@@ -189,29 +209,28 @@ export function BridgeView({
           const matchInfo = matchById.get(mid);
           const bridgeInfo = bridgeById.get(b.id);
           if (!matchInfo || !bridgeInfo) return null;
-          // Curve is active iff its bridge AND its match are both active.
           const active = bridgeIsActive(b) && matchIsActive(mid);
           return (
             <BridgeCurve
               key={`bm-${b.id}-${mid}`}
-              x1={BRIDGE_X + 90} y1={bridgeInfo.y}
-              x2={MATCH_X - 24} y2={matchInfo.y}
+              x1={BX + (compact ? 60 : 90)} y1={bridgeInfo.y}
+              x2={MX - (compact ? 18 : 24)} y2={matchInfo.y}
               color={bridgeColor(b.kind)}
-              weight={1.4}
-              opacity={active ? 0.65 : 0.05}
+              weight={2.4}
+              opacity={active ? 0.7 : 0.05}
               delay={0.15 + j * 0.04}
             />
           );
         }))}
 
         {/* Focal node — clicking clears any active selection */}
-        <FocalNode x={FOCAL_X} y={focalY} label={focal.name} kind={focal.kind} onClick={clearAll} />
+        <FocalNode x={FX} y={focalY} label={focal.name} kind={focal.kind} onClick={clearAll} compact={compact} />
 
         {/* Bridge nodes */}
         {bridges.map((b, i) => (
           <BridgeNode
             key={b.id}
-            x={BRIDGE_X} y={bridgeYs[i]}
+            x={BX} y={bridgeYs[i]}
             label={b.label}
             kind={b.kind}
             count={b.matches.length}
@@ -219,6 +238,7 @@ export function BridgeView({
             dimmed={!bridgeIsActive(b)}
             onClick={() => selectBridge(b.id)}
             delay={i * 0.05}
+            compact={compact}
           />
         ))}
 
@@ -226,7 +246,7 @@ export function BridgeView({
         {matches.map((m, i) => (
           <MatchNode
             key={m.id}
-            x={MATCH_X} y={matchYs[i]}
+            x={MX} y={matchYs[i]}
             label={m.name}
             score={m.score}
             rank={m.rank}
@@ -236,11 +256,12 @@ export function BridgeView({
             selected={m.id === selectedMatchId}
             onClick={() => selectMatch(m.id)}
             delay={0.15 + i * 0.05}
+            compact={compact}
           />
         ))}
       </svg>
 
-      <div className="border-t hairline px-4 py-3 flex items-center justify-between flex-wrap gap-2 text-xs text-nucleus-subtle">
+      {!compact && <div className="border-t hairline px-4 py-3 flex items-center justify-between flex-wrap gap-2 text-xs text-nucleus-subtle">
         <div className="flex items-center gap-3 flex-wrap">
           {selectedBridge ? (
             <>
@@ -275,7 +296,7 @@ export function BridgeView({
           )}
         </div>
         <span className="hidden md:inline">Curve weight = # of matches sharing the bridge</span>
-      </div>
+      </div>}
     </div>
   );
 }
@@ -310,34 +331,40 @@ function BridgeCurve({ x1, y1, x2, y2, color, weight, opacity = 0.85, delay = 0 
   );
 }
 
-function FocalNode({ x, y, label, kind, onClick }: { x: number; y: number; label: string; kind: 'talent' | 'startup'; onClick?: () => void }) {
+function FocalNode({ x, y, label, kind, onClick, compact = false }: { x: number; y: number; label: string; kind: 'talent' | 'startup'; onClick?: () => void; compact?: boolean }) {
+  const r = compact ? 24 : 32;
+  const fs = compact ? 11 : 13;
   return (
     <g onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
       <motion.circle
-        cx={x} cy={y} r={32}
+        cx={x} cy={y} r={r}
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.4, ease: 'backOut' }}
         fill={kind === 'startup' ? '#c4794a' : '#0c1525'}
         stroke="white" strokeWidth={3}
       />
-      <text x={x} y={y + 5} textAnchor="middle" fontSize={13} fontWeight={700} fill="white" pointerEvents="none">
+      <text x={x} y={y + 4} textAnchor="middle" fontSize={fs} fontWeight={700} fill="white" pointerEvents="none">
         {initials(label)}
       </text>
-      <text x={x} y={y + 56} textAnchor="middle" fontSize={13} fontWeight={700} fill="#0c1525">{label}</text>
-      <text x={x} y={y + 72} textAnchor="middle" fontSize={10} fontWeight={600} fill="#9aa0ad" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>You · click to clear</text>
+      <text x={x} y={y + r + 18} textAnchor="middle" fontSize={fs} fontWeight={700} fill="#0c1525">{label}</text>
+      {!compact && (
+        <text x={x} y={y + r + 32} textAnchor="middle" fontSize={9} fontWeight={600} fill="#9aa0ad" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>You · click to clear</text>
+      )}
     </g>
   );
 }
 
-function BridgeNode({ x, y, label, kind, count, selected, dimmed, onClick, delay }: {
+function BridgeNode({ x, y, label, kind, count, selected, dimmed, onClick, delay, compact = false }: {
   x: number; y: number; label: string; kind: Bridge['kind']; count: number;
-  selected: boolean; dimmed: boolean; onClick: () => void; delay: number;
+  selected: boolean; dimmed: boolean; onClick: () => void; delay: number; compact?: boolean;
 }) {
   const color = bridgeColor(kind);
-  // Two-line layout: label on top, count chip on bottom — keeps everything inside the pill
-  const w = Math.min(210, Math.max(130, label.length * 9 + 36));
-  const h = 56;
+  const labelTrunc = compact ? truncate(label, 16) : label;
+  const w = compact
+    ? Math.min(160, Math.max(96, labelTrunc.length * 7 + 24))
+    : Math.min(210, Math.max(130, label.length * 9 + 36));
+  const h = compact ? 42 : 56;
   const fillBg = selected ? color : 'white';
   const labelColor = selected ? 'white' : '#0c1525';
   const opacity = dimmed ? 0.25 : 1;
@@ -352,12 +379,12 @@ function BridgeNode({ x, y, label, kind, count, selected, dimmed, onClick, delay
     >
       <rect x={x - w / 2} y={y - h / 2} width={w} height={h} rx={h / 2}
             fill={fillBg} stroke={color} strokeWidth={selected ? 2.5 : 1.8} />
-      <text x={x} y={y - 6} textAnchor="middle" dominantBaseline="middle"
-            fontSize={13.5} fontWeight={700} fill={labelColor}>
-        {label}
+      <text x={x} y={y - (compact ? 4 : 6)} textAnchor="middle" dominantBaseline="middle"
+            fontSize={compact ? 11 : 13.5} fontWeight={700} fill={labelColor}>
+        {labelTrunc}
       </text>
-      <text x={x} y={y + 14} textAnchor="middle" dominantBaseline="middle"
-            fontSize={9.5} fontWeight={600}
+      <text x={x} y={y + (compact ? 11 : 14)} textAnchor="middle" dominantBaseline="middle"
+            fontSize={compact ? 8 : 9.5} fontWeight={600}
             fill={selected ? 'rgba(255,255,255,0.9)' : color}
             style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>
         {countLabel}
@@ -366,14 +393,16 @@ function BridgeNode({ x, y, label, kind, count, selected, dimmed, onClick, delay
   );
 }
 
-function MatchNode({ x, y, label, score, rank, kind, connected, active, selected, onClick, delay }: {
+function MatchNode({ x, y, label, score, rank, kind, connected, active, selected, onClick, delay, compact = false }: {
   x: number; y: number; label: string; score: number; rank: number;
   kind: 'talent' | 'startup'; connected: boolean; active: boolean; selected: boolean;
-  onClick: () => void; delay: number;
+  onClick: () => void; delay: number; compact?: boolean;
 }) {
   const baseOp = connected ? 1 : 0.5;
   const opacity = active ? baseOp : 0.18;
   const chipFill = selected ? '#c4794a' : (connected ? '#0c1525' : '#9aa0ad');
+  const r = compact ? 16 : 22;
+  const labelOffset = compact ? 24 : 34;
   return (
     <motion.g
       onClick={onClick}
@@ -384,19 +413,19 @@ function MatchNode({ x, y, label, score, rank, kind, connected, active, selected
     >
       {/* selected ring */}
       {selected && (
-        <circle cx={x} cy={y} r={28} fill="none" stroke="#c4794a" strokeWidth={1.5} strokeDasharray="3 3" />
+        <circle cx={x} cy={y} r={r + 6} fill="none" stroke="#c4794a" strokeWidth={1.5} strokeDasharray="3 3" />
       )}
       {/* Score chip */}
-      <circle cx={x} cy={y} r={22}
+      <circle cx={x} cy={y} r={r}
               fill={chipFill}
               stroke="white" strokeWidth={2.5} />
-      <text x={x} y={y + 4} textAnchor="middle" fontSize={13} fontWeight={700} fill="white" pointerEvents="none">{score}</text>
+      <text x={x} y={y + 4} textAnchor="middle" fontSize={compact ? 10 : 13} fontWeight={700} fill="white" pointerEvents="none">{score}</text>
 
       {/* Label to right (clickable) */}
-      <text x={x + 34} y={y - 2} fontSize={13} fontWeight={selected ? 800 : 700} fill={selected ? '#c4794a' : '#0c1525'}>
-        #{rank} {truncate(label, 24)}
+      <text x={x + labelOffset} y={y - 2} fontSize={compact ? 11 : 13} fontWeight={selected ? 800 : 700} fill={selected ? '#c4794a' : '#0c1525'}>
+        #{rank} {truncate(label, compact ? 18 : 24)}
       </text>
-      <text x={x + 34} y={y + 14} fontSize={10} fontWeight={600} fill="#9aa0ad"
+      <text x={x + labelOffset} y={y + (compact ? 12 : 14)} fontSize={compact ? 8 : 10} fontWeight={600} fill="#9aa0ad"
             style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}>
         {kind === 'startup' ? 'Startup' : 'Operator'}{connected ? '' : ' · skills only'}{selected ? ' · selected' : ''}
       </text>

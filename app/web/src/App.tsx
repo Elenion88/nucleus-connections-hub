@@ -6,7 +6,6 @@ import { Landing } from './pages/Landing.tsx';
 import { Discover } from './pages/Discover.tsx';
 import { TalentDetail } from './pages/TalentDetail.tsx';
 import { StartupDetail } from './pages/StartupDetail.tsx';
-import { Network } from './pages/Network.tsx';
 import { NucleusAdmin } from './pages/NucleusAdmin.tsx';
 import { TalentSignup } from './pages/TalentSignup.tsx';
 import { StartupSignup } from './pages/StartupSignup.tsx';
@@ -26,7 +25,6 @@ export default function App() {
           <Route path="/discover" element={<Discover />} />
           <Route path="/talent/:id" element={<TalentDetail />} />
           <Route path="/startup/:id" element={<StartupDetail />} />
-          <Route path="/network" element={<Network />} />
           <Route path="/nucleus" element={<NucleusAdmin />} />
           <Route path="/join" element={<JoinChooser />} />
           <Route path="/join/talent" element={<TalentSignup />} />
